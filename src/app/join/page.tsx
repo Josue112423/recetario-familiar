@@ -8,6 +8,9 @@ function makeCode6() {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
+const { data: userData } = await supabase.auth.getUser()
+if (!userData.user) throw new Error('Primero inicia sesión en /login.')
+
 export default function JoinPage() {
   const router = useRouter()
   const [email, setEmail] = useState<string | null>(null)

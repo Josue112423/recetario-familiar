@@ -13,9 +13,9 @@ export default function Home() {
     setMessage('')
 
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: email.trim(),
       options: {
-        emailRedirectTo: 'http://localhost:3000/join',
+      emailRedirectTo: `${window.location.origin}/join`,
       },
     })
 

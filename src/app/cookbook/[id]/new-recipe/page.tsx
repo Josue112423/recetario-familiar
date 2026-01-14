@@ -179,7 +179,7 @@ const stepsToText = () => {
   return (
     <main className="mx-auto max-w-4xl px-6 py-10 text-slate-900">
       <button
-        className="text-sm text-slate-100 hover:underline"
+        className="text-sm text-slate-700 hover:underline"
         onClick={() => router.push(`/cookbook/${cookbookId}`)}
       >
         ← Volver al recetario
@@ -195,7 +195,7 @@ const stepsToText = () => {
         >
             ← Volver al recetario
         </button>
-      </div>
+    </div>
 
 
       <div className="mt-8 overflow-hidden rounded-3xl border bg-white shadow-sm">

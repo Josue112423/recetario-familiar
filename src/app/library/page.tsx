@@ -35,6 +35,8 @@ export default function LibraryPage() {
     return localStorage.getItem('active_family_id')
   }, [])
 
+  const [familyCode, setFamilyCode] = useState<string | null>(null)
+
   useEffect(() => {
     const run = async () => {
       setLoading(true)
@@ -45,6 +47,15 @@ export default function LibraryPage() {
         setLoading(false)
         return
       }
+
+      const { data: fam, error: famErr } = await supabase
+        .from('families')
+        .select('code')
+        .eq('id', fid)
+        .single()
+
+      if (!famErr) setFamilyCode(fam.code as string)
+
 
       const { data, error } = await supabase
         .from('cookbooks')
@@ -71,11 +82,66 @@ export default function LibraryPage() {
           <h1 className="text-3xl font-bold">Biblioteca familiar</h1>
           <p className="mt-2 text-slate-100">Tus recetarios (como libros).</p>
         </div>
+
+        {familyCode && (
+            <div className="mt-4 rounded-2xl border bg-white p-4 shadow-sm">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                 <div>
+                   <div className="text-sm font-semibold text-slate-800">Código de familia</div>
+                   <div className="mt-1 text-2xl font-extrabold tracking-widest text-slate-900">
+                    {familyCode}
+                 </div>
+                  <div className="mt-1 text-sm text-slate-700">
+                      Compártelo para que se unan al recetario.
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                   <button
+                    className="rounded-xl border  text-slate-800 bg-white px-4 py-3 hover:bg-slate-50"
+                        onClick={async () => {
+                     await navigator.clipboard.writeText(familyCode)
+                       alert('Copiado ✅')
+                      }}
+                 >
+                   Copiar
+                  </button>
+
+                 <button
+                   className="rounded-xl bg-slate-900 px-4 py-3 text-white hover:opacity-90"
+                      onClick={async () => {
+                      const text = `Únete a nuestro recetario familiar. Código: ${familyCode}\nLink: ${window.location.origin}/join`
+                       if (navigator.share) {
+                         await navigator.share({ title: 'Recetario familiar', text })
+                       } else {
+                         await navigator.clipboard.writeText(text)
+                         alert('Mensaje copiado ✅')
+                        }
+                      }}
+                 >
+                     Compartir
+                 </button>
+                 </div>
+             </div>
+             </div>
+        )}
+
         <button
           className="rounded-xl bg-slate-900 px-4 py-3 text-white hover:opacity-90"
           onClick={() => router.push('/join')}
         >
           Cambiar / entrar a otra familia
+        </button>
+
+        <button
+            className="rounded-xl border  text-slate-800 bg-white px-4 py-3 hover:bg-slate-50"
+             onClick={async () => {
+              await supabase.auth.signOut()
+             localStorage.removeItem('active_family_id')
+             window.location.href = '/login'
+             }}
+            >
+            Cerrar sesión
         </button>
       </div>
 
