@@ -33,11 +33,11 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-6 py-12 text-slate-900">
+    <main className="mx-auto max-w-md px-6 py-12 text-slate-100">
       <h1 className="text-3xl font-extrabold">Iniciar sesión</h1>
-      <p className="mt-2 text-slate-800">Te mandamos un link al correo para entrar.</p>
+      <p className="mt-2 text-slate-200">Te mandamos un link al correo para entrar.</p>
 
-      <label className="mt-6 block text-sm font-semibold">Correo</label>
+      <label className="mt-6 block text-sm font-semibold  text-slate-200">Correo</label>
       <input
         className="mt-2 w-full rounded-xl border px-4 py-3 text-lg"
         value={email}
@@ -46,7 +46,7 @@ export default function LoginPage() {
       />
 
       <button
-        className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-3 text-white hover:opacity-90 disabled:opacity-50"
+        className="mt-4 w-full rounded-xl bg-slate-200 px-4 py-3 text-white hover:opacity-90 disabled:opacity-50"
         onClick={sendLink}
         disabled={loading}
       >
