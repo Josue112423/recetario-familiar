@@ -16,12 +16,11 @@ export default function LoginPage() {
     try {
       if (!email.trim()) throw new Error('Escribe tu correo.')
 
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-        })
+      const { error } = await supabase.auth.signInWithOtp({ 
+        email, 
+        options: { emailRedirectTo: 'https://recetario-familiar-jg7a.vercel.app/join',
+       }, 
+    })
       if (error) throw error
 
       setMsg('Listo ✅ Revisa tu correo y abre el link para entrar.')
