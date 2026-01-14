@@ -46,7 +46,7 @@ export default function LoginPage() {
       />
 
       <button
-        className="mt-4 w-full rounded-xl bg-slate-200 px-4 py-3 text-white hover:opacity-90 disabled:opacity-50"
+        className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-3 text-white hover:opacity-90 disabled:opacity-50"
         onClick={sendLink}
         disabled={loading}
       >
