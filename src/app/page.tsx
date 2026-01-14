@@ -1,76 +1,51 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { useRouter } from 'next/navigation'
 
-export default function Home() {
-  const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
-  const [message, setMessage] = useState('')
+export default function HomePage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
 
-  const sendMagicLink = async () => {
-    setStatus('sending')
-    setMessage('')
+  useEffect(() => {
+    const run = async () => {
+      // Esto “absorbe” el hash (#...) si viene del magic link
+      const { data } = await supabase.auth.getSession()
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: {
-      emailRedirectTo: `${window.location.origin}/auth/callback`,
-    },
-    })
+      if (data.session) {
+        router.replace('/join')
+        return
+      }
 
-    if (error) {
-      setStatus('error')
-      setMessage(error.message)
-      return
+      setLoading(false)
     }
 
-    setStatus('sent')
-    setMessage('Listo ✅ Te mandé un enlace a tu correo para entrar.')
+    run()
+  }, [router])
+
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-md px-6 py-12 text-slate-900">
+        <h1 className="text-2xl font-bold">Entrando…</h1>
+        <p className="mt-2 text-slate-800">Cargando tu sesión.</p>
+      </main>
+    )
   }
 
   return (
-    <main style={{ maxWidth: 520, margin: '60px auto', padding: 24, fontFamily: 'system-ui' }}>
-      <h1 style={{ fontSize: 32, marginBottom: 8 }}>Recetario Familiar</h1>
-      <p style={{ marginBottom: 24, fontSize: 16, opacity: 0.8 }}>
-        Entra con tu correo. Te mandamos un enlace (sin contraseña).
+    <main className="mx-auto max-w-md px-6 py-12 text-slate-900">
+      <h1 className="text-3xl font-extrabold">Recetario familiar</h1>
+      <p className="mt-2 text-slate-800">
+        Inicia sesión para entrar a tu familia.
       </p>
 
-      <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Correo</label>
-      <input
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="tu_correo@gmail.com"
-        style={{
-          width: '100%',
-          padding: 14,
-          fontSize: 18,
-          borderRadius: 10,
-          border: '1px solid #ccc',
-          marginBottom: 16,
-        }}
-      />
-
       <button
-        onClick={sendMagicLink}
-        disabled={!email || status === 'sending'}
-        style={{
-          width: '100%',
-          padding: 14,
-          fontSize: 18,
-          borderRadius: 10,
-          border: 'none',
-          cursor: !email || status === 'sending' ? 'not-allowed' : 'pointer',
-        }}
+        className="mt-6 w-full rounded-xl bg-slate-900 px-4 py-3 text-white hover:opacity-90"
+        onClick={() => router.push('/login')}
       >
-        {status === 'sending' ? 'Enviando...' : 'Enviarme enlace'}
+        Iniciar sesión
       </button>
-
-      {message && (
-        <p style={{ marginTop: 16, fontSize: 16 }}>
-          {message}
-        </p>
-      )}
     </main>
   )
 }
