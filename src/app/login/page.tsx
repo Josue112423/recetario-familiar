@@ -16,10 +16,11 @@ export default function LoginPage() {
     try {
       if (!email.trim()) throw new Error('Escribe tu correo.')
 
-      const { error } = await supabase.auth.signInWithOtp({ 
-        email, 
-        options: { emailRedirectTo: 'https://recetario-familiar-jg7a.vercel.app/join',
-       }, 
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
     })
       if (error) throw error
 

@@ -8,9 +8,6 @@ function makeCode6() {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
-const { data: userData } = await supabase.auth.getUser()
-if (!userData.user) throw new Error('Primero inicia sesión en /login.')
-
 export default function JoinPage() {
   const router = useRouter()
   const [email, setEmail] = useState<string | null>(null)
@@ -23,9 +20,12 @@ export default function JoinPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? null)
+      const u = data.user
+      setEmail(u?.email ?? null)
+      if (!u) router.replace('/login')
     })
-  }, [])
+  }, [router])
+
 
   const createFamily = async () => {
     setLoading(true)
