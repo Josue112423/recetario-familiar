@@ -34,9 +34,9 @@ export default function HomePage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-6 py-12 text-slate-900">
+    <main className="mx-auto max-w-md px-6 py-12 text-slate-100">
       <h1 className="text-3xl font-extrabold">Recetario familiar</h1>
-      <p className="mt-2 text-slate-800">
+      <p className="mt-2 text-slate-200">
         Inicia sesión para entrar a tu familia.
       </p>
 
