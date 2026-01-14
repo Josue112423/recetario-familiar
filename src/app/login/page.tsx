@@ -56,7 +56,7 @@ export default function LoginPage() {
       {msg && <p className="mt-4 text-slate-800">{msg}</p>}
 
       <button
-        className="mt-6 w-full rounded-xl border bg-white px-4 py-3 hover:bg-slate-50"
+        className="mt-6 w-full rounded-xl border bg-slate-900 px-4 py-3 hover:bg-slate-50"
         onClick={() => router.push('/join')}
       >
         Ya tengo sesión / Ir a unirme
