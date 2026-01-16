@@ -165,10 +165,25 @@ export default function JoinPage() {
     setMsg(`Bienvenido/a ✅ Entraste a: ${fam.name}`)
     router.replace('/library')
   } catch (e: unknown) {
-    setMsg(e instanceof Error ? e.message : 'Ocurrió un error inesperado')
-  } finally {
-    setLoading(false)
-  }
+  console.error('joinFamily error:', e)
+
+  const msg =
+    e instanceof Error
+      ? e.message
+      : typeof e === 'string'
+        ? e
+        : e && typeof e === 'object' && 'message' in e && typeof (e as { message: unknown }).message === 'string'
+          ? (e as { message: string }).message
+          : e && typeof e === 'object' && 'error_description' in e && typeof (e as { error_description: unknown }).error_description === 'string'
+            ? (e as { error_description: string }).error_description
+            : e && typeof e === 'object' && 'details' in e && typeof (e as { details: unknown }).details === 'string'
+              ? (e as { details: string }).details
+              : 'Ocurrió un error al unirte (sin detalles).'
+
+  setMsg(msg)
+} finally {
+  setLoading(false)
+}
 }
 
 
