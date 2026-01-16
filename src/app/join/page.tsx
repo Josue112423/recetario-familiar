@@ -123,7 +123,7 @@ export default function JoinPage() {
     // 2) ¿Ya soy miembro?
     const { data: existingMember, error: exErr } = await supabase
       .from('family_members')
-      .select('id,display_name')
+      .select('family_id,user_id,display_name')
       .eq('family_id', fam.id)
       .eq('user_id', user.id)
       .maybeSingle()
