@@ -98,57 +98,79 @@ export default function JoinPage() {
   }
 
   const joinFamily = async () => {
-    setLoading(true)
-    setMsg('')
-    try {
-      const { data: userData } = await supabase.auth.getUser()
-      const user = userData.user
-      if (!user) throw new Error('No hay sesión activa.')
+  setLoading(true)
+  setMsg('')
 
-      if (!displayName.trim()) throw new Error('Pon tu nombre (ej. “Abuela Lupita”).')
+  try {
+    const { data: userData } = await supabase.auth.getUser()
+    const user = userData.user
+    if (!user) throw new Error('No hay sesión activa.')
 
-      const code = familyCode.trim()
-      if (code.length !== 6) throw new Error('El código debe tener 6 dígitos.')
+    if (!displayName.trim()) throw new Error('Pon tu nombre (ej. “Abuela Lupita”).')
 
-      // 1) Busca familia por código
-      const { data: fam, error: famErr } = await supabase
-        .from('families')
-        .select('id,name,code')
-        .eq('code', code)
-        .single()
+    const code = familyCode.trim().toUpperCase()
+    if (code.length !== 6) throw new Error('El código debe tener 6 dígitos.')
 
-      if (famErr) throw new Error('Código inválido o familia no encontrada.')
+    // 1) Busca familia por código
+    const { data: fam, error: famErr } = await supabase
+      .from('families')
+      .select('id,name,code')
+      .eq('code', code)
+      .single()
 
-      // 2) Agrega miembro (si ya existe, da error; MVP simple)
+    if (famErr || !fam) throw new Error('Código inválido o familia no encontrada.')
+
+    // 2) ¿Ya soy miembro?
+    const { data: existingMember, error: exErr } = await supabase
+      .from('family_members')
+      .select('id,display_name')
+      .eq('family_id', fam.id)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (exErr) throw exErr
+
+    // 3) Si NO existe, insertar; si SÍ existe, no hacemos nada
+    if (!existingMember) {
       const { error: memErr } = await supabase.from('family_members').insert({
         family_id: fam.id,
         user_id: user.id,
         display_name: displayName.trim(),
         role: 'member',
       })
-      if (memErr) throw new Error('Ya estabas en esta familia o hubo un error al unirte.')
+      if (memErr) throw memErr
+    }
 
-      // 3) Crea tu recetario automático
+    // 4) Crear tu recetario automático SOLO si no existe ya uno tuyo
+    const { data: myCookbook, error: cbCheckErr } = await supabase
+      .from('cookbooks')
+      .select('id')
+      .eq('family_id', fam.id)
+      .eq('owner_id', user.id)
+      .maybeSingle()
+
+    if (cbCheckErr) throw cbCheckErr
+
+    if (!myCookbook) {
       const { error: cbErr } = await supabase.from('cookbooks').insert({
         family_id: fam.id,
         owner_id: user.id,
         title: `Recetario de ${displayName.trim()}`,
       })
       if (cbErr) throw cbErr
-
-      setMsg(`Bienvenido/a ✅ Entraste a: ${fam.name}`)
-      localStorage.setItem('active_family_id', fam.id)
-      router.push('/library')
-    } catch (e: unknown) {
-        if (e instanceof Error) {
-            setMsg(e.message)
-        } else {
-            setMsg('Ocurrió un error inesperado')
-        }
-    } finally {
-      setLoading(false)
     }
+
+    // 5) Entrar
+    localStorage.setItem('active_family_id', fam.id)
+    setMsg(`Bienvenido/a ✅ Entraste a: ${fam.name}`)
+    router.replace('/library')
+  } catch (e: unknown) {
+    setMsg(e instanceof Error ? e.message : 'Ocurrió un error inesperado')
+  } finally {
+    setLoading(false)
   }
+}
+
 
   return (
     <main style={{ maxWidth: 560, margin: '50px auto', padding: 24, fontFamily: 'system-ui' }}>
