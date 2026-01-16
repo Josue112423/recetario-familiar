@@ -121,14 +121,16 @@ export default function JoinPage() {
     if (famErr || !fam) throw new Error('Código inválido o familia no encontrada.')
 
     // 2) ¿Ya soy miembro?
-    const { data: existingMember, error: exErr } = await supabase
+    const { data: existingMembers, error: exErr } = await supabase
       .from('family_members')
       .select('family_id,user_id,display_name')
       .eq('family_id', fam.id)
       .eq('user_id', user.id)
-      .maybeSingle()
+      .limit(1)
 
     if (exErr) throw exErr
+      const existingMember = (existingMembers && existingMembers.length > 0) ? existingMembers[0] : null
+
 
     // 3) Si NO existe, insertar; si SÍ existe, no hacemos nada
     if (!existingMember) {
