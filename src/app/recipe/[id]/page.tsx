@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useParams, useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 type Recipe = {
   id: string
   cookbook_id: string
   title: string
+  photo_url: string | null
   ingredients_text: string
   steps_text: string
   created_at: string
@@ -26,7 +28,7 @@ export default function RecipePage() {
       setLoading(true)
       const { data, error } = await supabase
         .from('recipes')
-        .select('id,cookbook_id,title,ingredients_text,steps_text,created_at')
+        .select('id,cookbook_id,title,photo_url,ingredients_text,steps_text,created_at')
         .eq('id', recipeId)
         .single()
 
@@ -55,8 +57,21 @@ export default function RecipePage() {
           <h1 className="mt-3 text-3xl font-bold">{recipe.title}</h1>
           <p className="mt-2 text-slate-100">{new Date(recipe.created_at).toLocaleString()}</p>
 
+          {recipe.photo_url && (
+            <div className="mt-6 overflow-hidden rounded-3xl border bg-white shadow-sm">
+              <Image
+                src={recipe.photo_url}
+                alt={`Foto de ${recipe.title}`}
+                width={1200}
+                height={800}
+                className="h-auto w-full object-cover"
+                priority
+              />
+            </div>
+          )}
+
           <button
-            className="ml-3 rounded-xl border  text-slate-700 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+            className="ml-4 rounded-xl border  text-slate-700 bg-white px-3 py-2 text-sm hover:bg-slate-50"
             onClick={() => router.push(`/recipe/${recipe.id}/edit`)}
             >
              Editar

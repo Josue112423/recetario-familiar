@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useParams, useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 type Step = 1 | 2 | 3
 
@@ -32,6 +33,8 @@ export default function NewRecipeWizard() {
 
   const [step, setStep] = useState<Step>(1)
   const [title, setTitle] = useState('')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [ingredientsRows, setIngredientsRows] = useState<IngredientRow[]>([
     { name: '', amount: '', unit: 'pieza' },
   ])
@@ -130,49 +133,81 @@ const stepsToText = () => {
   /* ---------------- SAVE ---------------- */
 
   const save = async () => {
-    setSaving(true)
-    setMsg('')
+  setSaving(true)
+  setMsg('')
 
-    try {
-      const fid = familyId || localStorage.getItem('active_family_id')
-      if (!fid) throw new Error('No encontré familia activa.')
+  try {
+    const fid = familyId || localStorage.getItem('active_family_id')
+    if (!fid) throw new Error('No encontré familia activa.')
 
-      const { data: userData } = await supabase.auth.getUser()
-      const user = userData.user
-      if (!user) throw new Error('No hay sesión activa.')
+    const { data: userData } = await supabase.auth.getUser()
+    const user = userData.user
+    if (!user) throw new Error('No hay sesión activa.')
 
-      if (!title.trim()) throw new Error('Pon el nombre de la receta.')
+    if (!title.trim()) throw new Error('Pon el nombre de la receta.')
 
-      const ingredientsText = ingredientsToText()
-      if (!ingredientsText.trim()) throw new Error('Agrega al menos un ingrediente.')
+    const ingredientsText = ingredientsToText()
+    if (!ingredientsText.trim()) throw new Error('Agrega al menos un ingrediente.')
 
-      const stepsTextFinal = stepsToText()
-      if (!stepsTextFinal.trim()) throw new Error('Agrega al menos un paso.')
+    const stepsTextFinal = stepsToText()
+    if (!stepsTextFinal.trim()) throw new Error('Agrega al menos un paso.')
 
-      const { data, error } = await supabase
-        .from('recipes')
-        .insert({
-          family_id: fid,
-          cookbook_id: cookbookId,
-          author_id: user.id,
-          title: title.trim(),
-          photo_url: null,
-          ingredients_text: ingredientsText,
-          steps_text: stepsTextFinal,
+    // 1) Crear receta (primero) para obtener recipeId
+    const { data, error } = await supabase
+      .from('recipes')
+      .insert({
+        family_id: fid,
+        cookbook_id: cookbookId,
+        author_id: user.id,
+        title: title.trim(),
+        photo_url: null,
+        ingredients_text: ingredientsText,
+        steps_text: stepsTextFinal,
+      })
+      .select('id')
+      .single()
+
+    if (error) throw error
+
+    const recipeId = data.id as string
+
+    // 2) Si hay foto, subir a Storage y guardar URL
+    if (photoFile) {
+      const ext = photoFile.name.split('.').pop() || 'jpg'
+      const path = `${fid}/${recipeId}/${Date.now()}.${ext}`
+
+      const { error: upErr } = await supabase.storage
+        .from('recipe-photos')
+        .upload(path, photoFile, {
+          upsert: true,
+          contentType: photoFile.type || 'image/jpeg',
         })
-        .select('id')
-        .single()
 
-      if (error) throw error
+      if (upErr) throw upErr
 
-      router.push(`/recipe/${data.id}`)
-    } catch (e: unknown) {
-      if (e instanceof Error) setMsg(e.message)
-      else setMsg('Ocurrió un error inesperado')
-    } finally {
-      setSaving(false)
+      const { data: pub } = supabase.storage
+        .from('recipe-photos')
+        .getPublicUrl(path)
+
+      const photoUrl = pub.publicUrl
+
+      const { error: updErr } = await supabase
+        .from('recipes')
+        .update({ photo_url: photoUrl })
+        .eq('id', recipeId)
+
+      if (updErr) throw updErr
     }
+
+    // 3) ahora sí: ir a la receta
+    router.push(`/recipe/${recipeId}`)
+  } catch (e: unknown) {
+    if (e instanceof Error) setMsg(e.message)
+    else setMsg('Ocurrió un error inesperado')
+  } finally {
+    setSaving(false)
   }
+}
 
   /* ---------------- UI ---------------- */
 
@@ -226,6 +261,36 @@ const stepsToText = () => {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder='Ej. "Mole de la abuela"'
               />
+
+              <div className="mt-6 rounded-2xl border bg-white p-4">
+                <div className="text-base font-semibold text-slate-900">Foto (opcional)</div>
+                <p className="mt-1 text-sm text-slate-700">
+                  Ayuda mucho para reconocer la receta.
+                </p>
+
+                <input
+                  className="mt-3 block w-full text-sm"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] ?? null
+                    setPhotoFile(f)
+                    setPhotoPreview(f ? URL.createObjectURL(f) : null)
+                  }}
+                />
+
+                {photoPreview && (
+                  <div className="mt-4 overflow-hidden rounded-2xl border">
+                    <Image
+                      src={photoPreview}
+                      alt="Vista previa"
+                      width={1200}
+                      height={800}
+                      className="h-auto w-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
             </section>
 
             {/* PAGE 2 */}
