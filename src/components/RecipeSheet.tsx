@@ -143,29 +143,31 @@ export function RecipeSheet({
     </div>
 
     {/* Tabs laterales (afuera del card, pegadas) */}
-    <div className="absolute right-[-14px] top-28 hidden md:flex flex-col gap-3">
-      {onEdit && (
-        <button
-          type="button"
-          onClick={onEdit}
-          className="rounded-l-2xl rounded-r-xl border planner-divider bg-[color:var(--paper)] px-4 py-3 text-sm font-semibold text-[color:var(--ink)] shadow-sm hover:brightness-95"
-          style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-        >
-          Editar
-        </button>
-      )}
+    <div className="absolute right-[-18px] top-16 hidden md:flex flex-col -space-y-2">
+        {onEdit && (
+            <button
+            type="button"
+            onClick={onEdit}
+            className="relative z-10 rounded-l-3xl rounded-r-xl border border-l-2 planner-divider bg-[color:var(--paper)] px-5 py-4 text-sm font-semibold text-[color:var(--ink)] shadow-md transition
+            hover:brightness-90 hover:-translate-x-1 hover:shadow-lg hover:z-30"
+            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+            >
+            Editar
+            </button>
+        )}
 
-      {onCook && (
-        <button
-          type="button"
-          onClick={onCook}
-          className="rounded-l-2xl rounded-r-xl border planner-divider bg-amber-700 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-amber-800"
-          style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-        >
-          Cocinar
-        </button>
-      )}
-    </div>
+        {onCook && (
+            <button
+            type="button"
+            onClick={onCook}
+            className="relative z-10 rounded-l-3xl rounded-r-xl border border-l-2 planner-divider bg-amber-700 px-5 py-4 text-sm font-semibold text-white shadow-md transition
+            hover:bg-amber-800 hover:-translate-x-1 hover:shadow-lg hover:z-30"
+            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+            >
+            Cocinar
+            </button>
+        )}
+        </div>
   </div>
 )
 
