@@ -1,26 +1,48 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+:root{
+  --paper:  #fbf7ef;   /* papel */
+  --ink:    #1f2937;   /* texto */
+  --muted:  #6b7280;   /* gris */
+  --line:   rgba(31,41,55,.16); /* líneas */
+  --accent: #b45309;   /* ámbar/cobre */
+  --bg:     #f5efe4;   /* fondo cálido cocina */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* fondo cálido de “cocina” */
+body{
+  background: radial-gradient(1200px 600px at 20% 0%, rgba(180,83,9,.09), transparent 60%),
+              radial-gradient(900px 500px at 90% 20%, rgba(245,158,11,.12), transparent 60%),
+              var(--bg);
+  color: var(--ink);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* tarjeta tipo papel */
+.paper{
+  background: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: 0 14px 40px rgba(0,0,0,.08);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* líneas tipo cuaderno (suaves) */
+.paper-lines{
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 30px,
+    rgba(31,41,55,.08) 31px
+  );
 }
+
+/* título estilo “recetario” */
+.recipe-title{
+  letter-spacing: .2px;
+}
+
+:root{
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+h1,h2,.title-font{
+  font-family: var(--font-title), serif;
+}
+

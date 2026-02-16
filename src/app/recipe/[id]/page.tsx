@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useParams, useRouter } from 'next/navigation'
-import Image from 'next/image'
+//import Image from 'next/image'
+import { RecipeSheet } from '@/components/RecipeSheet'
+
 
 type Recipe = {
   id: string
@@ -54,47 +56,17 @@ export default function RecipePage() {
             ← Volver al recetario
           </button>
 
-          <h1 className="mt-3 text-3xl font-bold">{recipe.title}</h1>
-          <p className="mt-2 text-slate-100">{new Date(recipe.created_at).toLocaleString()}</p>
-
-          <button
-            className="ml-4 rounded-xl border  text-slate-700 bg-white px-3 py-2 text-sm hover:bg-slate-50"
-            onClick={() => router.push(`/recipe/${recipe.id}/edit`)}
-            >
-             Editar
-          </button>
-
-          <button
-            className="ml-2 rounded-xl bg-slate-900 px-3 py-2 text-sm text-white hover:opacity-90"
-            onClick={() => router.push(`/recipe/${recipe.id}/cook`)}
-            >
-            Seguir receta
-          </button>
-
-          {recipe.photo_url && (
-            <div className="mt-6 overflow-hidden rounded-3xl border bg-white shadow-sm">
-              <Image
-                src={recipe.photo_url}
-                alt={`Foto de ${recipe.title}`}
-                width={1200}
-                height={800}
-                className="h-auto w-full object-cover"
-                priority
-              />
-            </div>
-          )}
-
-          <div className="mt-8 grid gap-6">
-            <section className="rounded-2xl border text-slate-700 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold">Ingredientes</h2>
-              <pre className="mt-3 whitespace-pre-wrap text-base text-slate-700">{recipe.ingredients_text}</pre>
-            </section>
-
-            <section className="rounded-2xl border text-slate-700 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold">Pasos</h2>
-              <pre className="mt-3 whitespace-pre-wrap text-base text-slate-700">{recipe.steps_text}</pre>
-            </section>
-          </div>
+          <RecipeSheet
+            title={recipe.title}
+            photoUrl={recipe.photo_url}
+            meta={new Date(recipe.created_at).toLocaleDateString('es-MX', {
+             day: 'numeric',
+             month: 'long',
+            year: 'numeric',
+           })}
+           ingredients={recipe.ingredients_text}
+           steps={recipe.steps_text}
+          />
         </>
       )}
     </main>
