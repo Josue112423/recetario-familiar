@@ -143,13 +143,18 @@ export function RecipeSheet({
     </div>
 
     {/* Tabs laterales (afuera del card, pegadas) */}
-    <div className="absolute right-[-18px] top-16 hidden md:flex flex-col -space-y-2">
+    <div className="absolute right-[-28px] top-10 hidden md:flex flex-col -space-y-4">
         {onEdit && (
             <button
             type="button"
             onClick={onEdit}
-            className="relative z-10 rounded-l-3xl rounded-r-xl border border-l-2 planner-divider bg-[color:var(--paper)] px-5 py-4 text-sm font-semibold text-[color:var(--ink)] shadow-md transition
-            hover:brightness-90 hover:-translate-x-1 hover:shadow-lg hover:z-30"
+            className="relative z-10 rounded-l-3xl rounded-r-xl border border-l-2 
+            px-6 py-5 text-sm font-semibold text-white shadow-md transition-all duration-200
+            bg-[#ad8365] 
+            hover:bg-[#8f6b54] 
+            hover:-translate-x-2 
+            hover:shadow-xl 
+            hover:z-30"
             style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
             >
             Editar
@@ -160,8 +165,13 @@ export function RecipeSheet({
             <button
             type="button"
             onClick={onCook}
-            className="relative z-10 rounded-l-3xl rounded-r-xl border border-l-2 planner-divider bg-amber-700 px-5 py-4 text-sm font-semibold text-white shadow-md transition
-            hover:bg-amber-800 hover:-translate-x-1 hover:shadow-lg hover:z-30"
+            className="relative z-10 rounded-l-3xl rounded-r-xl border border-l-2 
+            px-6 py-5 text-sm font-semibold text-white shadow-md transition-all duration-200
+            bg-[#ad8365] 
+            hover:bg-[#8f6b54] 
+            hover:-translate-x-2 
+            hover:shadow-xl 
+            hover:z-30"
             style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
             >
             Cocinar
