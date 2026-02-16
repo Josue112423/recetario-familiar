@@ -57,15 +57,17 @@ export default function RecipePage() {
           </button>
 
           <RecipeSheet
-             title={recipe.title}
-              photoUrl={recipe.photo_url}
-             metaLeft="15 min"
-             metaMid="10–12 min"
-             metaRight="—"
-             ingredients={recipe.ingredients_text}
-             steps={recipe.steps_text}
-             notes="Tip: si te gusta más salado, agrega una pizca extra."
-            />
+            title={recipe.title}
+            photoUrl={recipe.photo_url}
+            metaLeft="Coming soon"
+            metaMid="Coming soon"
+            metaRight="Coming soon"
+            ingredients={recipe.ingredients_text}
+            steps={recipe.steps_text}
+            notes="Coming soon"
+            onEdit={() => router.push(`/recipe/${recipe.id}/edit`)}
+            onCook={() => router.push(`/recipe/${recipe.id}/cook`)}
+          />
         </>
       )}
     </main>

@@ -10,12 +10,14 @@ function parseLines(text: string): string[] {
 export function RecipeSheet({
   title,
   photoUrl,
-  metaLeft, // ej: "Prep 15 min"
-  metaMid,  // ej: "Cook 10–12 min"
-  metaRight,// ej: "Serves 24"
+  metaLeft,
+  metaMid,
+  metaRight,
   ingredients,
   steps,
   notes,
+  onEdit,
+  onCook,
 }: {
   title: string
   photoUrl?: string | null
@@ -25,12 +27,43 @@ export function RecipeSheet({
   ingredients: string
   steps: string
   notes?: string
+  onEdit?: () => void
+  onCook?: () => void
 }) {
+
   const ing = parseLines(ingredients)
   const st = parseLines(steps)
 
   return (
+  <div className="relative">
     <div className="planner-card rounded-[34px] p-6 md:p-8">
+      {/* ...todo tu contenido actual... */}
+    </div>
+
+    {/* Tabs laterales */}
+    <div className="absolute right-[-14px] top-28 hidden md:flex flex-col gap-3">
+      {onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="rounded-l-2xl rounded-r-xl border planner-divider bg-[color:var(--paper)] px-4 py-3 text-sm font-semibold text-[color:var(--ink)] shadow-sm hover:brightness-95"
+          style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+        >
+          Editar
+        </button>
+      )}
+
+      {onCook && (
+        <button
+          type="button"
+          onClick={onCook}
+          className="rounded-l-2xl rounded-r-xl border planner-divider bg-amber-700 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-amber-800"
+          style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+        >
+          Cocinar
+        </button>
+      )}
+    </div>
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
