@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useParams, useRouter } from 'next/navigation'
-//import Image from 'next/image'
+import Image from 'next/image'
 import { RecipeSheet } from '@/components/RecipeSheet'
 
 
@@ -57,16 +57,15 @@ export default function RecipePage() {
           </button>
 
           <RecipeSheet
-            title={recipe.title}
-            photoUrl={recipe.photo_url}
-            meta={new Date(recipe.created_at).toLocaleDateString('es-MX', {
-             day: 'numeric',
-             month: 'long',
-            year: 'numeric',
-           })}
-           ingredients={recipe.ingredients_text}
-           steps={recipe.steps_text}
-          />
+             title={recipe.title}
+              photoUrl={recipe.photo_url}
+             metaLeft="15 min"
+             metaMid="10–12 min"
+             metaRight="—"
+             ingredients={recipe.ingredients_text}
+             steps={recipe.steps_text}
+             notes="Tip: si te gusta más salado, agrega una pizca extra."
+            />
         </>
       )}
     </main>
