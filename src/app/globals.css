@@ -46,3 +46,41 @@ h1,h2,.title-font{
   font-family: var(--font-title), serif;
 }
 
+:root{
+  --planner-bg: #f2eadc;   /* fondo beige */
+  --paper: #f7f0e4;        /* hoja */
+  --ink: #2a2a2a;
+  --muted: #6b6258;
+  --rule: rgba(40, 35, 30, 0.16);
+  --rule2: rgba(40, 35, 30, 0.09);
+}
+
+/* Fondo general cálido */
+body{
+  background: var(--planner-bg);
+  color: var(--ink);
+}
+
+/* Tarjeta tipo “hoja/planner” */
+.planner-card{
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 18px 50px rgba(0,0,0,.12);
+}
+
+/* Líneas horizontales como libreta */
+.planner-lines{
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 30px,
+    var(--rule2) 31px
+  );
+}
+
+/* Separadores finos */
+.planner-divider{
+  border-color: var(--rule);
+}
+
+
