@@ -50,7 +50,7 @@ export default function RecipePage() {
       ) : (
         <>
           <button
-            className="text-sm text-slate-100 hover:underline"
+            className="text-sm hover:underline"
             onClick={() => router.push(`/cookbook/${recipe.cookbook_id}`)}
           >
             ← Volver al recetario
