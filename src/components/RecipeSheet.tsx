@@ -143,19 +143,23 @@ export function RecipeSheet({
     </div>
 
     {/* Tabs laterales (afuera del card, pegadas) */}
-    <div className="absolute right-[-28px] top-10 hidden md:flex flex-col -space-y-4">
+    <div className="absolute right-[-40px] top-8 hidden md:flex flex-col">
         {onEdit && (
             <button
             type="button"
             onClick={onEdit}
-            className="relative z-10 rounded-l-3xl rounded-r-xl border border-l-2 
-            px-6 py-5 text-sm font-semibold text-white shadow-md transition-all duration-200
-            bg-[#ad8365] 
-            hover:bg-[#8f6b54] 
-            hover:-translate-x-2 
-            hover:shadow-xl 
-            hover:z-30"
-            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+            className="relative z-10 rounded-l-3xl rounded-r-xl 
+            px-6 py-6 text-sm font-semibold text-white
+            bg-[#ad8365] shadow-md
+            transition-all duration-200
+            hover:bg-[#8f6b54]
+            hover:-translate-x-3
+            hover:shadow-xl"
+            style={{
+                writingMode: 'vertical-rl',
+                transform: 'rotate(180deg)',
+                marginBottom: '-18px'
+            }}
             >
             Editar
             </button>
@@ -165,14 +169,17 @@ export function RecipeSheet({
             <button
             type="button"
             onClick={onCook}
-            className="relative z-10 rounded-l-3xl rounded-r-xl border border-l-2 
-            px-6 py-5 text-sm font-semibold text-white shadow-md transition-all duration-200
-            bg-[#ad8365] 
-            hover:bg-[#8f6b54] 
-            hover:-translate-x-2 
-            hover:shadow-xl 
-            hover:z-30"
-            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+            className="relative z-0 rounded-l-3xl rounded-r-xl
+            px-6 py-6 text-sm font-semibold text-white
+            bg-[#ad8365] shadow-md
+            transition-all duration-200
+            hover:bg-[#8f6b54]
+            hover:-translate-x-3
+            hover:shadow-xl"
+            style={{
+                writingMode: 'vertical-rl',
+                transform: 'rotate(180deg)',
+            }}
             >
             Cocinar
             </button>
