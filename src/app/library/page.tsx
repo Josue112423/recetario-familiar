@@ -80,7 +80,7 @@ export default function LibraryPage() {
       <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Biblioteca familiar</h1>
-          <p className="mt-2 text-slate-100">Tus recetarios (como libros).</p>
+          <p className="mt-2">Tus recetarios (como libros).</p>
         </div>
 
         {familyCode && (

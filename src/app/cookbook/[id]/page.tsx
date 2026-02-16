@@ -67,11 +67,11 @@ export default function CookbookPage() {
     <main className="mx-auto max-w-4xl px-6 py-10">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <button className="text-sm text-slate-100 hover:underline" onClick={() => router.push('/library')}>
+          <button className="text-sm hover:underline" onClick={() => router.push('/library')}>
             ← Volver a biblioteca
           </button>
           <h1 className="mt-3 text-3xl font-bold">{cookbook?.title ?? 'Recetario'}</h1>
-          <p className="mt-2 text-slate-100">Índice de recetas</p>
+          <p className="mt-2 ">Índice de recetas</p>
         </div>
 
         <button

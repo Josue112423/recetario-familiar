@@ -124,7 +124,7 @@ export default function CookModePage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <button
-            className="text-sm text-slate-100 hover:underline"
+            className="text-sm hover:underline"
             onClick={() => router.push(`/recipe/${recipe.id}`)}
           >
             ← Volver a receta
