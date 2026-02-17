@@ -89,7 +89,7 @@ export default function LibraryPage() {
               Recetarios
             </h1>
             <p className="mt-3 text-sm text-[color:var(--muted)]">
-              Tus recetarios (como libros).
+              Tus recetarios (como libros y e).
             </p>
           </div>
 
