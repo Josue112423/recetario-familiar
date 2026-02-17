@@ -83,7 +83,7 @@ export default function LibraryPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-xs font-bold tracking-widest text-[#ad8365] uppercase">
-              Biblioteca familiar
+              Biblioteca familiar jh
             </div>
             <h1 className="title-font mt-2 text-4xl md:text-5xl font-bold tracking-tight">
               Recetarios
