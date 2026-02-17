@@ -1,10 +1,25 @@
 import Image from 'next/image'
+import { motion } from 'framer-motion'
+import { Edit2, Utensils } from 'lucide-react'
 
 function parseLines(text: string): string[] {
   return text
     .split('\n')
     .map((s) => s.trim())
     .filter(Boolean)
+}
+
+type RecipeSheetProps = {
+  title: string
+  photoUrl?: string | null
+  metaLeft?: string | null
+  metaMid?: string | null
+  metaRight?: string | null
+  ingredients: string
+  steps: string
+  notes?: string | null
+  onEdit?: () => void
+  onCook?: () => void
 }
 
 export function RecipeSheet({
@@ -18,174 +33,193 @@ export function RecipeSheet({
   notes,
   onEdit,
   onCook,
-}: {
-  title: string
-  photoUrl?: string | null
-  metaLeft?: string
-  metaMid?: string
-  metaRight?: string
-  ingredients: string
-  steps: string
-  notes?: string
-  onEdit?: () => void
-  onCook?: () => void
-}) {
-
+}: RecipeSheetProps) {
   const ing = parseLines(ingredients)
   const st = parseLines(steps)
 
   return (
-  <div className="relative">
-    {/* CARD */}
-    <div className="planner-card rounded-[34px] p-6 md:p-8">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="text-xs text-[color:var(--muted)]">Recetario familiar</div>
-          <h1 className="title-font mt-1 text-3xl md:text-4xl font-bold tracking-wide">
-            {title}
-          </h1>
-        </div>
-
-        {/* mini “tabs” (decorativo) */}
-        <div className="hidden md:flex flex-col items-end gap-2 text-[10px] text-[color:var(--muted)]">
-          <div className="rounded-full border px-3 py-1 planner-divider">RECIPES</div>
-          <div className="rounded-full border px-3 py-1 planner-divider">FAMILY</div>
-        </div>
-      </div>
-
-      {/* Meta row */}
-      <div className="mt-4 grid grid-cols-3 gap-3 text-xs md:text-sm text-[color:var(--muted)]">
-        <div className="rounded-2xl border px-3 py-2 planner-divider">
-          <div className="font-semibold text-[color:var(--ink)]">Prep</div>
-          <div>{metaLeft ?? '—'}</div>
-        </div>
-        <div className="rounded-2xl border px-3 py-2 planner-divider">
-          <div className="font-semibold text-[color:var(--ink)]">Cook</div>
-          <div>{metaMid ?? '—'}</div>
-        </div>
-        <div className="rounded-2xl border px-3 py-2 planner-divider">
-          <div className="font-semibold text-[color:var(--ink)]">Serves</div>
-          <div>{metaRight ?? '—'}</div>
-        </div>
-      </div>
-
-      <div className="mt-6 border-t planner-divider" />
-
-      {/* Main grid */}
-      <div className="mt-6 grid gap-6 md:grid-cols-12">
-        {/* LEFT: photo + ingredients */}
-        <div className="md:col-span-5">
-          {photoUrl ? (
-            <div className="overflow-hidden rounded-3xl border bg-white planner-divider">
-              <Image
-                src={photoUrl}
-                alt={`Foto de ${title}`}
-                width={1200}
-                height={900}
-                className="h-auto w-full object-cover"
-                priority
-              />
+    <div className="relative mx-auto max-w-5xl">
+      {/* CARD */}
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="planner-card relative z-10 rounded-[34px] p-6 md:p-12"
+      >
+        {/* Header */}
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <div className="mb-2 text-xs font-bold tracking-widest text-[#ad8365] uppercase">
+              Recetario familiar
             </div>
-          ) : (
-            <div className="h-[220px] rounded-3xl border planner-divider bg-white/40" />
-          )}
+            <h1 className="title-font text-4xl font-bold tracking-tight md:text-5xl">
+              {title}
+            </h1>
+          </div>
 
-          <div className="mt-5">
-            <div className="text-xs font-bold tracking-widest text-[color:var(--muted)]">
-              INGREDIENTES
-            </div>
-
-            <div className="planner-lines mt-3 rounded-2xl border planner-divider p-4">
-              <ul className="space-y-2 text-sm">
-                {ing.map((line, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <span className="mt-0.5 inline-flex h-4 w-4 rounded border planner-divider bg-white" />
-                    <span className="leading-6">{line}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* mini tabs decorativas */}
+          <div className="hidden flex-col items-end gap-2 text-[10px] font-bold tracking-widest text-[color:var(--muted)] md:flex">
+            <div className="planner-divider rounded-full border px-4 py-1.5 uppercase">Recipes</div>
+            <div className="planner-divider rounded-full border px-4 py-1.5 uppercase">Family</div>
           </div>
         </div>
 
-        {/* RIGHT: directions */}
-        <div className="md:col-span-7">
-          <div className="text-xs font-bold tracking-widest text-[color:var(--muted)]">
-            DIRECCIONES
+        {/* Meta row */}
+        <div className="grid grid-cols-3 gap-4 text-xs text-[color:var(--muted)] md:text-sm">
+          <div className="planner-divider rounded-2xl border bg-white/50 px-4 py-3">
+            <div className="mb-1 text-[10px] font-bold tracking-wider uppercase text-[color:var(--ink)]">
+              Prep
+            </div>
+            <div className="text-lg text-[#ad8365]">{metaLeft ?? '—'}</div>
+          </div>
+          <div className="planner-divider rounded-2xl border bg-white/50 px-4 py-3">
+            <div className="mb-1 text-[10px] font-bold tracking-wider uppercase text-[color:var(--ink)]">
+              Cook
+            </div>
+            <div className="text-lg text-[#ad8365]">{metaMid ?? '—'}</div>
+          </div>
+          <div className="planner-divider rounded-2xl border bg-white/50 px-4 py-3">
+            <div className="mb-1 text-[10px] font-bold tracking-wider uppercase text-[color:var(--ink)]">
+              Serves
+            </div>
+            <div className="text-lg text-[#ad8365]">{metaRight ?? '—'}</div>
+          </div>
+        </div>
+
+        <div className="planner-divider mt-8 border-t" />
+
+        {/* Main grid */}
+        <div className="mt-8 grid gap-10 lg:grid-cols-12">
+          {/* LEFT */}
+          <div className="space-y-8 lg:col-span-5">
+            {photoUrl ? (
+              <div className="planner-divider aspect-[4/3] overflow-hidden rounded-3xl border bg-white shadow-inner">
+                {/* IMPORTANTE: para URLs remotas de Supabase, asegúrate de tener next.config.js domains */}
+                <Image
+                  src={photoUrl}
+                  alt={`Foto de ${title}`}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 40vw"
+                  className="object-cover transition-transform duration-700 hover:scale-105"
+                  priority
+                />
+              </div>
+            ) : (
+              <div className="planner-divider aspect-[4/3] rounded-3xl border bg-[#f9f7f4] flex items-center justify-center text-black/20">
+                <Utensils className="h-16 w-16" />
+              </div>
+            )}
+
+            <div>
+              <div className="mb-4 text-xs font-bold tracking-widest text-[#ad8365] uppercase">
+                Ingredientes
+              </div>
+
+              <div className="planner-divider rounded-3xl border bg-white/50 p-6 backdrop-blur-sm">
+                <ul className="space-y-4 text-sm">
+                  {ing.map((line, i) => (
+                    <li key={i} className="group flex items-start gap-3">
+                      <span className="mt-1.5 inline-flex h-3 w-3 flex-shrink-0 rounded-full border-2 border-[#ad8365]/30 transition-colors group-hover:bg-[#ad8365]" />
+                      <span className="leading-relaxed text-[color:var(--ink)]/80">{line}</span>
+                    </li>
+                  ))}
+                  {ing.length === 0 && (
+                    <li className="italic text-[color:var(--muted)]">No hay ingredientes.</li>
+                  )}
+                </ul>
+              </div>
+            </div>
           </div>
 
-          <div className="planner-lines mt-3 rounded-2xl border planner-divider p-5">
-            <ol className="space-y-3 text-sm leading-7">
-              {st.map((line, idx) => (
-                <li key={idx} className="flex gap-3">
-                  <span className="w-6 text-right font-semibold text-[color:var(--muted)]">
-                    {idx + 1}.
-                  </span>
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ol>
+          {/* RIGHT */}
+          <div className="space-y-8 lg:col-span-7">
+            <div>
+              <div className="mb-4 text-xs font-bold tracking-widest text-[#ad8365] uppercase">
+                Direcciones
+              </div>
+
+              <div className="planner-divider rounded-3xl border bg-white/30 p-8">
+                <ol className="space-y-6 text-sm leading-relaxed">
+                  {st.map((line, idx) => (
+                    <li key={idx} className="flex gap-4">
+                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#ad8365]/10 text-xs font-bold text-[#ad8365]">
+                        {idx + 1}
+                      </span>
+                      <span className="pt-1 text-[color:var(--ink)]/90">{line}</span>
+                    </li>
+                  ))}
+                  {st.length === 0 && (
+                    <li className="italic text-[color:var(--muted)]">No hay pasos.</li>
+                  )}
+                </ol>
+              </div>
+            </div>
+
+            {/* Notes */}
+            {notes?.trim() ? (
+              <div className="planner-divider border-t pt-6">
+                <div className="mb-3 text-xs font-bold tracking-widest text-[#ad8365] uppercase">
+                  Notas
+                </div>
+                <div className="border-l-2 border-[#ad8365]/20 pl-4 text-lg leading-relaxed text-[color:var(--muted)]">
+                  {notes}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Notes */}
-      <div className="mt-6 border-t planner-divider" />
-      <div className="mt-5">
-        <div className="text-xs font-bold tracking-widest text-[color:var(--muted)]">
-          NOTAS
-        </div>
-        <div className="planner-lines mt-3 rounded-2xl border planner-divider p-4 text-sm leading-7">
-          {notes?.trim() ? notes : '—'}
-        </div>
-      </div>
-    </div>
-
-    {/* Tabs laterales (afuera del card, pegadas) */}
-    <div className="absolute right-[-40px] top-8 hidden md:flex flex-col">
+      {/* Desktop Side Buttons (como Replit) */}
+      <div className="hidden xl:flex flex-col absolute -right-20 top-20 gap-4">
         {onEdit && (
-            <button
+          <motion.button
             type="button"
+            whileHover={{ x: 6 }}
             onClick={onEdit}
-            className="relative z-10 rounded-l-3xl rounded-r-xl 
-            px-6 py-6 text-sm font-semibold text-white
-            bg-[#ad8365] shadow-md
-            transition-all duration-200
-            hover:bg-[#8f6b54]
-            hover:-translate-x-3
-            hover:shadow-xl"
-            style={{
-                writingMode: 'vertical-rl',
-                transform: 'rotate(180deg)',
-                marginBottom: '-18px'
-            }}
-            >
+            className="rounded-r-2xl px-4 py-8 text-sm font-bold tracking-widest uppercase text-white bg-[#ad8365] shadow-lg shadow-[#ad8365]/20 hover:bg-[#8f6b54] transition-colors"
+            style={{ writingMode: 'vertical-rl' }}
+          >
             Editar
-            </button>
+          </motion.button>
         )}
 
         {onCook && (
-            <button
+          <motion.button
+            type="button"
+            whileHover={{ x: 6 }}
+            onClick={onCook}
+            className="rounded-r-2xl px-4 py-8 text-sm font-bold tracking-widest uppercase text-white bg-[#ad8365] shadow-lg shadow-[#ad8365]/20 hover:bg-[#8f6b54] transition-colors"
+            style={{ writingMode: 'vertical-rl' }}
+          >
+            Cocinar
+          </motion.button>
+        )}
+      </div>
+
+      {/* Mobile FABs */}
+      <div className="fixed bottom-24 right-6 z-50 flex flex-col gap-3 xl:hidden">
+        {onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-[#ad8365]/20 bg-white text-[#ad8365] shadow-lg"
+            aria-label="Editar"
+          >
+            <Edit2 className="h-5 w-5" />
+          </button>
+        )}
+        {onCook && (
+          <button
             type="button"
             onClick={onCook}
-            className="relative z-0 rounded-l-3xl rounded-r-xl
-            px-6 py-6 text-sm font-semibold text-white
-            bg-[#ad8365] shadow-md
-            transition-all duration-200
-            hover:bg-[#8f6b54]
-            hover:-translate-x-3
-            hover:shadow-xl"
-            style={{
-                writingMode: 'vertical-rl',
-                transform: 'rotate(180deg)',
-            }}
-            >
-            Cocinar
-            </button>
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-[#ad8365] text-white shadow-xl shadow-[#ad8365]/30"
+            aria-label="Modo cocinar"
+          >
+            <Utensils className="h-6 w-6" />
+          </button>
         )}
-        </div>
-  </div>
-)
-
+      </div>
+    </div>
+  )
 }
