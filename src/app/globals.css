@@ -1,492 +1,91 @@
 @import "tailwindcss";
 
-:root {
-  --background: 38 40% 92%;
-  --foreground: 20 5% 17%;
-  --card: 36 38% 94%;
-  --card-foreground: 20 5% 17%;
-  --card-border: 20 5% 17% / 0.16;
-  --popover: 36 38% 94%;
-  --popover-foreground: 20 5% 17%;
-  --popover-border: 20 5% 17% / 0.16;
-  --primary: 24 30% 54%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 30 20% 85%;
-  --secondary-foreground: 20 5% 17%;
-  --muted: 30 15% 88%;
-  --muted-foreground: 22 8% 38%;
-  --accent: 30 20% 85%;
-  --accent-foreground: 20 5% 17%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 20 5% 17% / 0.16;
-  --input: 20 5% 17% / 0.2;
-  --ring: 24 30% 54%;
-  --chart-1: 24 80% 50%;
-  --chart-2: 160 60% 45%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
-  --sidebar: 36 35% 90%;
-  --sidebar-foreground: 20 5% 17%;
-  --sidebar-border: 20 5% 17% / 0.16;
-  --sidebar-primary: 24 30% 54%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 30 20% 85%;
-  --sidebar-accent-foreground: 20 5% 17%;
-  --sidebar-ring: 24 30% 54%;
-  --radius: 1.5rem;
+:root{
+  --paper:  #fbf7ef;   /* papel */
+  --ink:    #1f2937;   /* texto */
+  --muted:  #6b7280;   /* gris */
+  --line:   rgba(31,41,55,.16); /* líneas */
+  --accent: #b45309;   /* ámbar/cobre */
+  --bg:     #f5efe4;   /* fondo cálido cocina */
 }
 
-.dark {
-  --background: 38 40% 92%;
-  --foreground: 20 5% 17%;
-  --card: 36 38% 94%;
-  --card-foreground: 20 5% 17%;
-  --card-border: 20 5% 17% / 0.16;
-  --popover: 36 38% 94%;
-  --popover-foreground: 20 5% 17%;
-  --popover-border: 20 5% 17% / 0.16;
-  --primary: 24 30% 54%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 30 20% 85%;
-  --secondary-foreground: 20 5% 17%;
-  --muted: 30 15% 88%;
-  --muted-foreground: 22 8% 38%;
-  --accent: 30 20% 85%;
-  --accent-foreground: 20 5% 17%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 20 5% 17% / 0.16;
-  --input: 20 5% 17% / 0.2;
-  --ring: 24 30% 54%;
-  --chart-1: 24 80% 50%;
-  --chart-2: 160 60% 45%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
-  --sidebar: 36 35% 90%;
-  --sidebar-foreground: 20 5% 17%;
-  --sidebar-border: 20 5% 17% / 0.16;
-  --sidebar-primary: 24 30% 54%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 30 20% 85%;
-  --sidebar-accent-foreground: 20 5% 17%;
-  --sidebar-ring: 24 30% 54%;
-}
-
-@layer base {
-  body {
-    @apply bg-background text-foreground antialiased font-sans selection:bg-primary/20 selection:text-primary-foreground;
-    background-color: hsl(var(--background));
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-display font-bold tracking-tight text-foreground;
-  }
-}
-
-@layer components {
-  .planner-input {
-    @apply bg-transparent border-b-2 border-[#ad8365]/20 focus:border-[#ad8365] focus:outline-none transition-colors duration-200 px-0 rounded-none;
-  }
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-primary/20 hover:bg-primary/40 rounded-full;
-}
-
-:root {
-  --planner-bg: #f2eadc;
-  --paper: #f7f0e4;
-  --ink: #2a2a2a;
-  --recipe-muted: #6b6258;
-  --rule: rgba(40, 35, 30, 0.16);
-  --rule2: rgba(40, 35, 30, 0.09);
-  --warm-glow: rgba(180, 83, 9, 0.06);
-  --shelf-wood: #8B6F47;
-  --shelf-dark: #6B5035;
-  --book-shadow: rgba(30, 20, 10, 0.25);
-}
-
-body {
+/* fondo cálido de “cocina” */
+body{
   background: radial-gradient(1200px 600px at 20% 0%, rgba(180,83,9,.09), transparent 60%),
               radial-gradient(900px 500px at 90% 20%, rgba(245,158,11,.12), transparent 60%),
-              var(--planner-bg) !important;
-  font-family: 'DM Sans', sans-serif;
+              var(--bg);
+  color: var(--ink);
 }
 
-.planner-card {
+/* tarjeta tipo papel */
+.paper{
+  background: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: 0 14px 40px rgba(0,0,0,.08);
+}
+
+/* líneas tipo cuaderno (suaves) */
+.paper-lines{
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 30px,
+    rgba(31,41,55,.08) 31px
+  );
+}
+
+/* título estilo “recetario” */
+.recipe-title{
+  letter-spacing: .2px;
+}
+
+:root{
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+h1,h2,.title-font{
+  font-family: var(--font-title), serif;
+}
+
+:root{
+  --planner-bg: #f2eadc;   /* fondo beige */
+  --paper: #f7f0e4;        /* hoja */
+  --ink: #2a2a2a;
+  --muted: #6b6258;
+  --rule: rgba(40, 35, 30, 0.16);
+  --rule2: rgba(40, 35, 30, 0.09);
+}
+
+/* Fondo general cálido */
+body{
+  background: var(--planner-bg);
+  color: var(--ink);
+}
+
+/* Tarjeta tipo “hoja/planner” */
+.planner-card{
   background: var(--paper);
   border: 1px solid var(--rule);
   box-shadow: 0 18px 50px rgba(0,0,0,.12);
 }
 
-.planner-lines {
+/* Líneas horizontales como libreta */
+.planner-lines{
   background-image: repeating-linear-gradient(
-    to bottom, transparent, transparent 30px, var(--rule2) 31px
+    to bottom,
+    transparent,
+    transparent 30px,
+    var(--rule2) 31px
   );
 }
 
-.planner-divider {
+/* Separadores finos */
+.planner-divider{
   border-color: var(--rule);
 }
 
-h1, h2, .title-font {
-  font-family: 'Playfair Display', serif;
+.planner-tab{
+  box-shadow: 0 10px 22px rgba(0,0,0,.10);
 }
 
-.handwritten {
-  font-family: 'Comfortaa', cursive;
-}
 
-.floating-shelf-container {
-  position: relative;
-  animation: fadeSlideUp 0.5s ease-out forwards;
-  opacity: 0;
-  margin-bottom: 16px;
-}
 
-.floating-shelf-books {
-  display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 0 24px 0 20px;
-  min-height: 140px;
-}
-
-.floating-shelf-plank {
-  position: relative;
-  height: 18px;
-  background: linear-gradient(180deg, #c4a67a 0%, #a0845c 30%, #8B6F47 70%, #6B5035 100%);
-  border-radius: 3px;
-  box-shadow:
-    0 4px 12px rgba(30,20,10,0.3),
-    0 8px 24px rgba(30,20,10,0.15),
-    inset 0 1px 0 rgba(255,255,255,0.2);
-  margin-top: -2px;
-}
-.floating-shelf-plank::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent 0px,
-    transparent 60px,
-    rgba(0,0,0,0.04) 60px,
-    rgba(0,0,0,0.04) 62px
-  );
-  border-radius: inherit;
-}
-.floating-shelf-plank::after {
-  content: '';
-  position: absolute;
-  bottom: -6px;
-  left: 8px;
-  right: 8px;
-  height: 6px;
-  background: linear-gradient(180deg, rgba(30,20,10,0.12) 0%, transparent 100%);
-  border-radius: 0 0 50% 50%;
-}
-
-.standing-book {
-  transform-origin: bottom center;
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-  cursor: pointer;
-  position: relative;
-  flex-shrink: 0;
-}
-.standing-book:hover {
-  transform: translateY(-12px);
-  z-index: 5;
-}
-.standing-book:active {
-  transform: translateY(-16px) scale(1.02);
-}
-
-.standing-book-body {
-  position: relative;
-  border-radius: 3px 4px 4px 3px;
-  box-shadow: 2px 2px 6px rgba(30,20,10,0.25), -1px 0 2px rgba(0,0,0,0.1);
-  transition: box-shadow 0.3s ease;
-}
-.standing-book:hover .standing-book-body {
-  box-shadow: 3px 4px 14px rgba(30,20,10,0.35), -1px 0 3px rgba(0,0,0,0.15);
-}
-
-.standing-book-spine {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 8px;
-  border-radius: 3px 0 0 3px;
-  box-shadow: inset -2px 0 4px rgba(0,0,0,0.15);
-}
-
-.standing-book-cover {
-  position: absolute;
-  left: 8px;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 0 4px 4px 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 8px 6px;
-  overflow: hidden;
-}
-
-.standing-book-title {
-  font-family: 'Comfortaa', cursive;
-  font-size: 9px;
-  font-weight: 600;
-  line-height: 1.3;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-  word-break: break-word;
-  hyphens: auto;
-}
-
-.standing-book-label {
-  font-size: 6px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  margin-top: 6px;
-}
-
-.standing-book-pages {
-  position: absolute;
-  top: 3px;
-  bottom: 3px;
-  right: -3px;
-  width: 4px;
-  border-radius: 0 2px 2px 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    #f5efe6 0px,
-    #f5efe6 2px,
-    #e8dfd1 2px,
-    #e8dfd1 3px
-  );
-  box-shadow: 1px 0 2px rgba(0,0,0,0.08);
-}
-
-.standing-book-tooltip {
-  visibility: hidden;
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--ink);
-  color: var(--paper);
-  font-size: 12px;
-  font-family: 'Comfortaa', cursive;
-  padding: 6px 12px;
-  border-radius: 8px;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  z-index: 20;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
-}
-.standing-book-tooltip::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: var(--ink);
-}
-.standing-book:hover .standing-book-tooltip {
-  visibility: visible;
-  opacity: 1;
-}
-
-.watercolor-paper {
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(210,180,140,0.08), transparent 60%),
-    radial-gradient(ellipse at 70% 80%, rgba(180,150,120,0.06), transparent 60%),
-    var(--paper);
-  position: relative;
-}
-.watercolor-paper::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
-  pointer-events: none;
-  border-radius: inherit;
-}
-
-.recipe-decor {
-  position: absolute;
-  pointer-events: none;
-  opacity: 0.25;
-  z-index: 0;
-}
-.recipe-decor-top {
-  top: -30px;
-  right: -20px;
-  width: 200px;
-  transform: rotate(10deg);
-}
-.recipe-decor-bottom {
-  bottom: -30px;
-  left: -20px;
-  width: 180px;
-  transform: rotate(-8deg);
-}
-
-.recipe-card-container {
-  position: relative;
-}
-
-.recipe-card {
-  display: flex;
-  flex-direction: column;
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: 16px;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  height: 100%;
-}
-.recipe-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(30,20,10,0.14);
-}
-
-.recipe-card-hero {
-  position: relative;
-  height: 140px;
-  overflow: hidden;
-}
-.recipe-card-hero-fade {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 40px;
-  background: linear-gradient(180deg, transparent 0%, var(--paper) 100%);
-}
-
-.recipe-card-hero-placeholder {
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background:
-    radial-gradient(ellipse at 50% 50%, rgba(173,131,101,0.08), transparent 70%),
-    linear-gradient(135deg, rgba(173,131,101,0.04) 0%, rgba(210,180,140,0.06) 100%);
-}
-
-.recipe-card-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 12px 16px 14px;
-}
-
-.recipe-card-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--recipe-muted);
-  font-family: 'Comfortaa', cursive;
-}
-
-.recipe-card-container[draggable="true"] {
-  cursor: grab;
-}
-.recipe-card-container[draggable="true"]:active {
-  cursor: grabbing;
-}
-
-.recipe-card-delete {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  color: var(--recipe-muted);
-  cursor: pointer;
-  visibility: hidden;
-  opacity: 0;
-  transition: visibility 0.2s, opacity 0.2s, color 0.2s;
-  z-index: 5;
-}
-.recipe-card-container:hover .recipe-card-delete {
-  visibility: visible;
-  opacity: 1;
-}
-.recipe-card-delete:hover {
-  color: hsl(var(--destructive));
-  border-color: hsl(var(--destructive) / 0.3);
-}
-
-.side-tab {
-  writing-mode: vertical-lr;
-  border-radius: 0 8px 8px 0;
-  padding: 24px 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  border-left: 3px solid rgba(255,255,255,0.15);
-  box-shadow: 2px 2px 8px rgba(30,20,10,0.2);
-  cursor: pointer;
-  position: relative;
-  margin-bottom: -10px;
-  transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s, z-index 0s, filter 0.2s;
-}
-.side-tab:hover {
-  transform: translateX(3px);
-  box-shadow: 3px 3px 12px rgba(30,20,10,0.3);
-  filter: brightness(0.82);
-  z-index: 10;
-}
-.side-tab:active {
-  transform: translateX(5px);
-  filter: brightness(0.72);
-  z-index: 10;
-}
-
-.warm-glow {
-  box-shadow:
-    0 0 60px rgba(180, 120, 60, 0.08),
-    0 18px 50px rgba(0,0,0,.12);
-}
-
-@keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-up {
-  animation: fadeSlideUp 0.5s ease-out forwards;
-}
-
-.animate-fade-up-delay-1 { animation-delay: 0.1s; opacity: 0; }
-.animate-fade-up-delay-2 { animation-delay: 0.2s; opacity: 0; }
-.animate-fade-up-delay-3 { animation-delay: 0.3s; opacity: 0; }
