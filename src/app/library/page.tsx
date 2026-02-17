@@ -185,62 +185,74 @@ export default function LibraryPage() {
       {/* CONTENT */}
       <div className="mt-8">
         {loading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="planner-card rounded-3xl p-6 animate-pulse">
-                <div className="h-3 w-24 rounded bg-black/10" />
-                <div className="mt-4 h-6 w-3/4 rounded bg-black/10" />
-                <div className="mt-3 h-3 w-2/3 rounded bg-black/10" />
-              </div>
-            ))}
-          </div>
+          <p className="text-slate-800">Cargando…</p>
         ) : cookbooks.length === 0 ? (
-          <div className="planner-card rounded-3xl p-8">
-            <div className="text-[10px] font-bold tracking-widest text-[#ad8365] uppercase">
-              Sin recetarios
-            </div>
-            <div className="mt-3 text-xl font-bold">No veo recetarios todavía.</div>
-            <p className="mt-2 text-sm text-[color:var(--muted)]">
-              Regresa a <b>/join</b> y crea o únete a una familia.
-            </p>
+          <div className="rounded-2xl border border-dashed p-8 text-slate-800">
+            No veo recetarios todavía. Regresa a <b>/join</b> y crea o únete a una familia.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {cookbooks.map((b) => (
-              <button
-                key={b.id}
-                onClick={() => router.push(`/cookbook/${b.id}`)}
-                className="planner-card group rounded-3xl p-5 text-left transition hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div className="relative h-44 overflow-hidden rounded-3xl border bg-white/70 planner-divider">
-                  {/* Portada */}
-                  <div className={`absolute inset-0 ${coverClass(b.id)} opacity-95`} />
+          <section className="relative mt-10 h-[320px] overflow-hidden rounded-[28px]">
+            {/* fondo suave tipo Replit */}
+            <div className="absolute inset-0 bg-[radial-gradient(900px_400px_at_25%_0%,rgba(173,131,101,.18),transparent_60%),radial-gradient(700px_380px_at_85%_25%,rgba(245,158,11,.10),transparent_60%),linear-gradient(to_bottom,rgba(255,255,255,.35),rgba(255,255,255,.12))]" />
 
-                  {/* “Lomo” */}
-                  <div className="absolute left-0 top-0 h-full w-5 bg-black/15" />
-                  <div className="absolute left-5 top-0 h-full w-0.5 bg-white/40" />
+            {/* decoraciones (opcional) */}
+            <div className="pointer-events-none absolute bottom-10 left-8 hidden md:block">
+              <img
+                src="/attached_assets/plant-left.png"
+                alt=""
+                className="h-28 w-auto opacity-95"
+              />
+            </div>
+            <div className="pointer-events-none absolute right-0 top-24 hidden md:block">
+              <img
+                src="/attached_assets/vine-right.png"
+                alt=""
+                className="h-44 w-auto opacity-95"
+              />
+            </div>
 
-                  {/* Brillo */}
-                  <div className="absolute -left-10 top-0 h-full w-24 rotate-12 bg-white/25 blur-sm" />
+            {/* repisa */}
+            <div className="absolute bottom-6 left-6 right-6 h-10 rounded-xl bg-[#7a5f3c] shadow-[0_18px_35px_rgba(0,0,0,.25)]" />
+            <div className="absolute bottom-6 left-6 right-6 h-[2px] rounded-xl bg-white/20" />
 
-                  {/* Texto */}
-                  <div className="relative z-10 flex h-full flex-col justify-end p-4 text-slate-900">
-                    <div className="text-lg font-extrabold drop-shadow-sm">{b.title}</div>
-                    <div className="mt-1 text-sm text-black/70 group-hover:underline">
-                      Toca para abrir
+            {/* libros encima de la repisa */}
+            <div className="absolute bottom-[46px] left-10 right-10 flex items-end gap-10 overflow-x-auto pb-4">
+              {cookbooks.map((b) => (
+                <button
+                  key={b.id}
+                  onClick={() => router.push(`/cookbook/${b.id}`)}
+                  className="group relative h-[200px] w-[120px] shrink-0"
+                  title={b.title}
+                >
+                  {/* sombra en el piso */}
+                  <div className="absolute -bottom-2 left-3 right-3 h-3 rounded-full bg-black/25 blur-md transition group-hover:bg-black/35" />
+
+                  {/* libro */}
+                  <div className="absolute inset-0 overflow-hidden rounded-[14px] border border-black/10 shadow-[0_18px_30px_rgba(0,0,0,.18)] transition-transform group-hover:-translate-y-1">
+                    {/* portada */}
+                    <div className={`absolute inset-0 ${coverClass(b.id)} opacity-95`} />
+
+                    {/* lomo */}
+                    <div className="absolute left-0 top-0 h-full w-4 bg-black/20" />
+                    <div className="absolute left-4 top-0 h-full w-[2px] bg-white/35" />
+
+                    {/* brillo */}
+                    <div className="absolute -left-10 top-0 h-full w-24 rotate-12 bg-white/25 blur-sm" />
+
+                    {/* texto centrado como Replit */}
+                    <div className="relative z-10 flex h-full flex-col items-center justify-center px-3 text-center">
+                      <div className="text-[11px] font-extrabold leading-tight text-black/90 drop-shadow-sm">
+                        {b.title}
+                      </div>
+                      <div className="mt-2 text-[9px] font-bold tracking-widest text-black/60">
+                        RECETARIO
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* mini “notes” debajo, planner */}
-                <div className="planner-lines mt-5 rounded-2xl border planner-divider bg-white/40 p-4">
-                  <div className="h-3 w-5/6 rounded bg-black/10" />
-                  <div className="mt-3 h-3 w-2/3 rounded bg-black/10" />
-                  <div className="mt-3 h-3 w-3/4 rounded bg-black/10" />
-                </div>
-              </button>
-            ))}
-          </div>
+                </button>
+              ))}
+            </div>
+          </section>
         )}
       </div>
 
