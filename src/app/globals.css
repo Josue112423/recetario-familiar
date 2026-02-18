@@ -25,13 +25,19 @@
 /* ================= GLOBAL BASE ================= */
 
 body {
-  @apply bg-background text-foreground antialiased;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
   background:
     radial-gradient(1200px 600px at 20% 0%, rgba(180,83,9,.09), transparent 60%),
     radial-gradient(900px 500px at 90% 20%, rgba(245,158,11,.12), transparent 60%),
     var(--planner-bg) !important;
+
   font-family: 'DM Sans', sans-serif;
 }
+
 
 h1, h2, h3, h4, h5, h6,
 .title-font {
@@ -42,8 +48,19 @@ h1, h2, h3, h4, h5, h6,
 /* ================= COMPONENT CLASSES ================= */
 
 .planner-input {
-  @apply bg-transparent border-b-2 border-[#ad8365]/20 focus:border-[#ad8365] focus:outline-none transition-colors duration-200 px-0 rounded-none;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid rgba(173, 131, 101, 0.2);
+  outline: none;
+  transition: border-color 200ms;
+  padding-left: 0;
+  padding-right: 0;
+  border-radius: 0;
 }
+.planner-input:focus {
+  border-bottom-color: rgba(173, 131, 101, 1);
+}
+
 
 /* ================= SCROLLBAR ================= */
 
@@ -54,9 +71,15 @@ h1, h2, h3, h4, h5, h6,
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary/20 hover:bg-primary/40 rounded-full;
+  background: hsl(var(--primary) / 0.2);
+  border-radius: 9999px;
 }
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.4);
+}
+
 
 /* ================= FLOATING SHELF ================= */
 
