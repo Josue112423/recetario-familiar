@@ -12,30 +12,39 @@ type Cookbook = {
   created_at: string
 }
 
-function coverClass(seed: string) {
-  // elige una “portada” determinística según el id
-  const options = [
-    'bg-gradient-to-br from-amber-200 to-amber-500',
-    'bg-gradient-to-br from-rose-200 to-rose-500',
-    'bg-gradient-to-br from-sky-200 to-sky-500',
-    'bg-gradient-to-br from-emerald-200 to-emerald-500',
-    'bg-gradient-to-br from-violet-200 to-violet-500',
-  ]
+function hash(seed: string) {
   let n = 0
-  for (let i = 0; i < seed.length; i++) n = (n + seed.charCodeAt(i)) % options.length
-  return options[n]
+  for (let i = 0; i < seed.length; i++) n = (n * 31 + seed.charCodeAt(i)) >>> 0
+  return n
+}
+
+function bookStyle(seed: string) {
+  // paletas tipo “libro” (determinísticas por id)
+  const palettes = [
+    { spine: '#5B3A2E', cover: 'linear-gradient(180deg,#F59E0B 0%,#B45309 100%)', ink: '#fff' },
+    { spine: '#1F3A5F', cover: 'linear-gradient(180deg,#60A5FA 0%,#2563EB 100%)', ink: '#fff' },
+    { spine: '#2F4A3A', cover: 'linear-gradient(180deg,#34D399 0%,#059669 100%)', ink: '#0b1b12' },
+    { spine: '#4A2F5A', cover: 'linear-gradient(180deg,#C4B5FD 0%,#7C3AED 100%)', ink: '#fff' },
+    { spine: '#7A2E2E', cover: 'linear-gradient(180deg,#FDA4AF 0%,#E11D48 100%)', ink: '#fff' },
+    { spine: '#6B5035', cover: 'linear-gradient(180deg,#E7D3B0 0%,#C4A67A 100%)', ink: '#2a2a2a' },
+  ]
+  const n = hash(seed)
+  const p = palettes[n % palettes.length]
+  const w = 54 + (n % 18) // 54–71
+  const h = 108 + ((n >>> 4) % 26) // 108–133
+  return { ...p, w, h }
 }
 
 export default function LibraryPage() {
   const router = useRouter()
   const [cookbooks, setCookbooks] = useState<Cookbook[]>([])
   const [loading, setLoading] = useState(true)
+  const [familyCode, setFamilyCode] = useState<string | null>(null)
+
   const familyId = useMemo(() => {
     if (typeof window === 'undefined') return null
     return localStorage.getItem('active_family_id')
   }, [])
-
-  const [familyCode, setFamilyCode] = useState<string | null>(null)
 
   useEffect(() => {
     const run = async () => {
@@ -44,6 +53,7 @@ export default function LibraryPage() {
       const fid = localStorage.getItem('active_family_id')
       if (!fid) {
         setCookbooks([])
+        setFamilyCode(null)
         setLoading(false)
         return
       }
@@ -54,8 +64,7 @@ export default function LibraryPage() {
         .eq('id', fid)
         .single()
 
-      if (!famErr) setFamilyCode(fam.code as string)
-
+      if (!famErr) setFamilyCode((fam?.code ?? null) as string | null)
 
       const { data, error } = await supabase
         .from('cookbooks')
@@ -69,6 +78,7 @@ export default function LibraryPage() {
       } else {
         setCookbooks((data ?? []) as Cookbook[])
       }
+
       setLoading(false)
     }
 
@@ -76,112 +86,166 @@ export default function LibraryPage() {
   }, [familyId])
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Biblioteca familiar</h1>
-          <p className="mt-2">Tus recetarios (como libros).</p>
-        </div>
+    <main className="mx-auto max-w-6xl px-4 py-8">
+      {/* Contenedor tipo planner/papel */}
+      <section className="planner-card watercolor-paper warm-glow rounded-[24px] border p-6 md:p-8 relative overflow-hidden">
+        {/* Decoraciones (usa tus imágenes en public/attached_assets) */}
+        <img
+          className="recipe-decor recipe-decor-top"
+          src="/attached_assets/decor-kitchen.png"
+          alt=""
+        />
+        <img
+          className="recipe-decor recipe-decor-bottom"
+          src="/attached_assets/decor-herbs.png"
+          alt=""
+        />
 
-        {familyCode && (
-            <div className="mt-4 rounded-2xl border bg-white p-4 shadow-sm">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                 <div>
-                   <div className="text-sm font-semibold text-slate-800">Código de familia</div>
-                   <div className="mt-1 text-2xl font-extrabold tracking-widest text-slate-900">
-                    {familyCode}
-                 </div>
-                  <div className="mt-1 text-sm text-slate-700">
-                      Compártelo para que se unan al recetario.
-                    </div>
-                  </div>
+        <div className="relative z-10">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h1 className="text-3xl md:text-4xl title-font">Biblioteca familiar</h1>
+              <p className="mt-2 text-[13px] md:text-sm" style={{ color: 'var(--recipe-muted)' }}>
+                Tus recetarios como libros en un estante.
+              </p>
+            </div>
 
-                  <div className="flex gap-2">
-                   <button
-                    className="rounded-xl border  text-slate-800 bg-white px-4 py-3 hover:bg-slate-50"
-                        onClick={async () => {
-                     await navigator.clipboard.writeText(familyCode)
-                       alert('Copiado ✅')
-                      }}
-                 >
-                   Copiar
-                  </button>
-
-                 <button
-                   className="rounded-xl bg-slate-900 px-4 py-3 text-white hover:opacity-90"
-                      onClick={async () => {
-                      const text = `Únete a nuestro recetario familiar. Código: ${familyCode}\nLink: ${window.location.origin}/join`
-                       if (navigator.share) {
-                         await navigator.share({ title: 'Recetario familiar', text })
-                       } else {
-                         await navigator.clipboard.writeText(text)
-                         alert('Mensaje copiado ✅')
-                        }
-                      }}
-                 >
-                     Compartir
-                 </button>
-                 </div>
-             </div>
-             </div>
-        )}
-
-        <button
-          className="rounded-xl bg-slate-900 px-4 py-3 text-white hover:opacity-90"
-          onClick={() => router.push('/join')}
-        >
-          Cambiar / entrar a otra familia
-        </button>
-
-        <button
-            className="rounded-xl border  text-slate-800 bg-white px-4 py-3 hover:bg-slate-50"
-             onClick={async () => {
-              await supabase.auth.signOut()
-             localStorage.removeItem('active_family_id')
-             window.location.href = '/login'
-             }}
-            >
-            Cerrar sesión
-        </button>
-      </div>
-
-      <div className="mt-8">
-        {loading ? (
-          <p className="text-slate-800">Cargando…</p>
-        ) : cookbooks.length === 0 ? (
-          <div className="rounded-2xl border border-dashed p-8 text-slate-800">
-            No veo recetarios todavía. Regresa a <b>/join</b> y crea o únete a una familia.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {cookbooks.map((b) => (
+            <div className="flex flex-wrap gap-2 md:justify-end">
               <button
-                key={b.id}
-                onClick={() => router.push(`/cookbook/${b.id}`)}
-                className="group text-left"
+                className="rounded-xl border px-4 py-2 text-sm"
+                style={{ borderColor: 'var(--rule)', background: 'var(--paper)', color: 'var(--ink)' }}
+                onClick={() => router.push('/join')}
               >
-                <div className="relative h-44 overflow-hidden rounded-2xl border bg-white shadow-sm transition group-hover:shadow-md">
-                  {/* Portada */}
-                  <div className={`absolute inset-0 ${coverClass(b.id)} opacity-95`} />
+                Cambiar / entrar a otra familia
+              </button>
 
-                  {/* “Lomo” del libro */}
-                  <div className="absolute left-0 top-0 h-full w-5 bg-black/15" />
-                  <div className="absolute left-5 top-0 h-full w-0.5 bg-white/40" />
+              <button
+                className="rounded-xl border px-4 py-2 text-sm"
+                style={{ borderColor: 'var(--rule)', background: 'var(--paper)', color: 'var(--ink)' }}
+                onClick={async () => {
+                  await supabase.auth.signOut()
+                  localStorage.removeItem('active_family_id')
+                  window.location.href = '/login'
+                }}
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
 
-                  {/* Brillo */}
-                  <div className="absolute -left-10 top-0 h-full w-24 rotate-12 bg-white/25 blur-sm" />
-
-                  {/* Texto */}
-                  <div className="relative z-10 flex h-full flex-col justify-end p-4 text-slate-900">
-                    <div className="text-lg font-extrabold drop-shadow-sm">{b.title}</div>
-                    <div className="mt-1 text-sm text-black/70">Toca para abrir</div>
+          {/* Código de familia */}
+          {familyCode && (
+            <div className="mt-5 rounded-2xl border p-4 md:p-5"
+                 style={{ borderColor: 'var(--rule)', background: 'var(--paper)' }}>
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div className="text-xs font-semibold" style={{ color: 'var(--recipe-muted)' }}>
+                    Código de familia
+                  </div>
+                  <div
+                    className="mt-1 text-2xl font-extrabold tracking-widest"
+                    style={{ color: 'var(--ink)' }}
+                  >
+                    {familyCode}
+                  </div>
+                  <div className="mt-1 text-xs" style={{ color: 'var(--recipe-muted)' }}>
+                    Compártelo para que se unan al recetario.
                   </div>
                 </div>
-              </button>
-            ))}
+
+                <div className="flex gap-2">
+                  <button
+                    className="rounded-xl border px-4 py-2 text-sm"
+                    style={{ borderColor: 'var(--rule)', background: 'transparent', color: 'var(--ink)' }}
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(familyCode)
+                      alert('Copiado ✅')
+                    }}
+                  >
+                    Copiar
+                  </button>
+
+                  <button
+                    className="rounded-xl px-4 py-2 text-sm text-white"
+                    style={{ background: 'hsl(var(--primary))' }}
+                    onClick={async () => {
+                      const text = `Únete a nuestro recetario familiar. Código: ${familyCode}\nLink: ${window.location.origin}/join`
+                      if (navigator.share) {
+                        await navigator.share({ title: 'Recetario familiar', text })
+                      } else {
+                        await navigator.clipboard.writeText(text)
+                        alert('Mensaje copiado ✅')
+                      }
+                    }}
+                  >
+                    Compartir
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Estante + libros */}
+          <div className="mt-6">
+            {loading ? (
+              <p style={{ color: 'var(--ink)' }}>Cargando…</p>
+            ) : cookbooks.length === 0 ? (
+              <div className="rounded-2xl border border-dashed p-8"
+                   style={{ borderColor: 'var(--rule)', color: 'var(--ink)', background: 'rgba(255,255,255,0.25)' }}>
+                No veo recetarios todavía. Regresa a <b>/join</b> y crea o únete a una familia.
+              </div>
+            ) : (
+              <div className="floating-shelf-container animate-fade-up">
+                <div className="floating-shelf-books">
+                  {cookbooks.map((b) => {
+                    const s = bookStyle(b.id)
+                    const title = (b.title || 'Recetario').trim()
+                    return (
+                      <button
+                        key={b.id}
+                        className="standing-book text-left"
+                        onClick={() => router.push(`/cookbook/${b.id}`)}
+                        aria-label={`Abrir recetario ${title}`}
+                      >
+                        <div className="standing-book-tooltip">
+                          <span>📖</span>
+                          <span>{title}</span>
+                        </div>
+
+                        <div
+                          className="standing-book-body"
+                          style={{
+                            width: `${s.w}px`,
+                            height: `${s.h}px`,
+                          }}
+                        >
+                          <div
+                            className="standing-book-spine"
+                            style={{ background: s.spine }}
+                          />
+                          <div
+                            className="standing-book-cover"
+                            style={{
+                              background: s.cover,
+                              color: s.ink,
+                            }}
+                          >
+                            <div className="standing-book-title">{title}</div>
+                            <div className="standing-book-label">RECETAS</div>
+                          </div>
+                          <div className="standing-book-pages" />
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div className="floating-shelf-plank" />
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      </section>
     </main>
   )
 }
