@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Trash2, Search, Clock } from 'lucide-react'
+import { Folder, FolderPlus, Flame, Users } from "lucide-react"
+
 
 type Recipe = {
   id: string
@@ -260,7 +262,7 @@ export default function CookbookPage() {
             className="flex items-center gap-2 text-xs font-semibold tracking-[0.2em]"
             style={{ color: 'var(--recipe-muted)' }}
           >
-            <span>📁</span>
+            <Folder className="h-4 w-4 opacity-60" />
             <span>CARPETAS</span>
           </div>
 
@@ -279,7 +281,7 @@ export default function CookbookPage() {
             {currentFolders.map(folder=>(
               <button
                 key={folder.id}
-                className="w-full text-left rounded-2xl border p-4 relative overflow-hidden"
+                className="folder-card w-full text-left rounded-2xl border p-4 relative overflow-hidden transition-all duration-300"
                 style={{ borderColor: 'var(--rule)', background: 'var(--paper)' }}
                 onClick={() => setFolderStack((s) => [...s, folder.id])}
                 onDragOver={(e) => {
@@ -303,7 +305,10 @@ export default function CookbookPage() {
                 <div className="relative">
                   <div className="flex items-center justify-center h-[92px] rounded-xl"
                       style={{ background: 'rgba(173,131,101,0.06)' }}>
-                    <span className="text-3xl opacity-40">📁</span>
+                    <div className="folder-icon">
+                      <FolderPlus className="h-8 w-8 opacity-40" />
+                    </div>
+
                   </div>
 
                   <div className="mt-3 font-semibold" style={{ color: 'var(--ink)' }}>
@@ -347,15 +352,26 @@ export default function CookbookPage() {
                     <div className="font-semibold">{r.title}</div>
 
                     <div className="mt-2 text-xs opacity-70 flex gap-3">
-                      <span>⏱️ {totalMinutes(r)} min</span>
-                      <span>👥 {r.servings ?? '-'}</span>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5 opacity-60"/>
+                        {totalMinutes(r)} min
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5 opacity-60"/>
+                        {r.servings ?? '-'} porc.
+                      </div>
+
                     </div>
 
                     <div className="mt-2 border-t opacity-30"/>
 
-                    <div className="mt-2 text-xs">
-                      {'🔥'.repeat(difficultyIcons(r.difficulty))}
+                    <div className="flex gap-1 opacity-70">
+                      {Array.from({ length: difficultyIcons(r.difficulty) }).map((_, i) => (
+                        <Flame key={i} className="h-3.5 w-3.5"/>
+                      ))}
                     </div>
+
                   </div>
                 </button>
               </div>
