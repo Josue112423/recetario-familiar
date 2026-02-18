@@ -95,16 +95,14 @@ export default function LibraryPage() {
         <img
           src="/attached_assets/potted-plant.png"
           alt=""
-          className="absolute bottom-[-10px] left-[10px] w-[90px] opacity-90 pointer-events-none"
+          className="pointer-events-none absolute bottom-[-6px] left-[12px] w-[86px] z-[60]"
         />
 
-        {/* Enredadera derecha (como la 2ª) */}
         <img
           src="/attached_assets/plant-vine.png"
           alt=""
-          className="absolute right-[-10px] top-[170px] w-[180px] opacity-80 pointer-events-none"
+          className="pointer-events-none absolute right-[-8px] top-[190px] w-[150px] z-[60] opacity-90"
         />
-
 
         <div className="relative z-10">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -200,8 +198,8 @@ export default function LibraryPage() {
                 No veo recetarios todavía. Regresa a <b>/join</b> y crea o únete a una familia.
               </div>
             ) : (
-              <div className="floating-shelf-container animate-fade-up">
-                <div className="floating-shelf-books">
+              <div className="floating-shelf-container animate-fade-up relative">
+                <div className="floating-shelf-books relative z-20">
                   {cookbooks.map((b) => {
                     const s = bookStyle(b.id)
                     const title = (b.title || 'Recetario').trim()
@@ -236,7 +234,7 @@ export default function LibraryPage() {
                             }}
                           >
                             <div className="standing-book-title">{title}</div>
-                            <div className="standing-book-label">RECETAS</div>
+                            <div className="standing-book-label">RECETARIO</div>
                           </div>
                           <div className="standing-book-pages" />
                         </div>
@@ -245,7 +243,7 @@ export default function LibraryPage() {
                   })}
                 </div>
 
-                <div className="floating-shelf-plank" />
+                <div className="floating-shelf-plank relative z-10" />
               </div>
             )}
           </div>
