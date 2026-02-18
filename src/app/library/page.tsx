@@ -95,13 +95,14 @@ export default function LibraryPage() {
         <img
           src="/attached_assets/potted-plant.png"
           alt=""
-          className="pointer-events-none absolute bottom-[-6px] left-[12px] w-[86px] z-[60]"
+          className="pointer-events-none absolute bottom-[8px] left-[18px] w-[92px] z-[60]"
         />
+
 
         <img
           src="/attached_assets/plant-vine.png"
           alt=""
-          className="pointer-events-none absolute right-[-8px] top-[190px] w-[150px] z-[60] opacity-90"
+          className="pointer-events-none absolute right-[-8px] top-[190px] w-[130px] z-[60] opacity-90"
         />
 
         <div className="relative z-10">
