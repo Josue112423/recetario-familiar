@@ -6,7 +6,6 @@ import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Trash2, Search, Clock } from 'lucide-react'
 import { Folder, FolderPlus, Flame, Users } from "lucide-react"
 
-
 type Recipe = {
   id: string
   title: string
@@ -137,6 +136,23 @@ export default function CookbookPage() {
     await supabase.from('recipes').delete().eq('id', recipeId)
     setRecipes(prev => prev.filter(r => r.id !== recipeId))
   }
+
+  const deleteFolder = async (folderId: string) => {
+  if (!confirm("¿Eliminar esta carpeta? Las recetas no se borrarán.")) return
+
+  const { error } = await supabase
+    .from("recipe_folders")
+    .delete()
+    .eq("id", folderId)
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  await refresh()
+}
+
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
@@ -301,6 +317,19 @@ export default function CookbookPage() {
                     }}
                   />
                 )}
+
+                <button
+                  type="button"
+                  className="recipe-card-delete"
+                  title="Eliminar carpeta"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    deleteFolder(folder.id)
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
 
                 <div className="relative">
                   <div className="flex items-center justify-center h-[92px] rounded-xl"

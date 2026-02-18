@@ -408,6 +408,12 @@ h1, h2, h3, h4, h5, h6,
   box-shadow: 0 12px 32px rgba(30,20,10,0.14);
 }
 
+.folder-card:hover .recipe-card-delete {
+  visibility: visible;
+  opacity: 1;
+}
+
+
 /* icono centrado aesthetic */
 .folder-icon {
   display: flex;
