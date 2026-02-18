@@ -39,7 +39,21 @@ export default function CookbookPage() {
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
   const [dragOverRemove, setDragOverRemove] = useState(false)
 
+  const [cookbookTitle, setCookbookTitle] = useState<string>('Recetario')
+  const [showNewFolder, setShowNewFolder] = useState(false)
+  const [newFolderName, setNewFolderName] = useState("")
+
+
   const refresh = async () => {
+
+    const { data: cb } = await supabase
+      .from('cookbooks')
+      .select('title')
+      .eq('id', cookbookId)
+      .single()
+
+    setCookbookTitle(cb?.title ?? 'Recetario')
+
     const { data: rs } = await supabase
       .from('recipes')
       .select('id,title,created_at,folder_id,prep_time_min,cook_time_min,servings,difficulty')
@@ -94,6 +108,28 @@ export default function CookbookPage() {
     refresh()
   }
 
+  const createFolder = async () => {
+  const name = newFolderName.trim()
+  if (!name) return
+
+  const { error } = await supabase.from("recipe_folders").insert({
+    cookbook_id: cookbookId,
+    parent_folder_id: activeFolderId,
+    name,
+    photo_url: null,
+  })
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  setShowNewFolder(false)
+  setNewFolderName("")
+  await refresh()
+}
+
+
   const deleteRecipe = async (recipeId: string) => {
     if (!confirm('¿Eliminar esta receta?')) return
     await supabase.from('recipes').delete().eq('id', recipeId)
@@ -107,17 +143,33 @@ export default function CookbookPage() {
         <div className="relative z-20">
 
           {/* Header */}
-          <div className="flex justify-between items-center">
-            <button onClick={() => router.push('/library')} className="flex items-center gap-2">
-              <ArrowLeft size={16}/> Volver a biblioteca
-            </button>
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <button
+                onClick={() => router.push('/library')}
+                className="inline-flex items-center gap-2 text-sm"
+                style={{ color: 'var(--ink)' }}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Volver a biblioteca
+              </button>
+
+              <h1 className="mt-3 text-4xl title-font" style={{ color: 'var(--ink)' }}>
+                {cookbookTitle}
+              </h1>
+
+              <p className="mt-2 handwritten" style={{ color: 'var(--recipe-muted)' }}>
+                Índice de recetas
+              </p>
+            </div>
 
             <button
               onClick={() => router.push(`/cookbook/${cookbookId}/new`)}
-              className="rounded-xl px-4 py-2 text-white"
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm text-white whitespace-nowrap"
               style={{ background: 'hsl(var(--primary))' }}
             >
-              <Plus size={16}/> Agregar receta
+              <Plus className="h-4 w-4 shrink-0" />
+              Agregar receta
             </button>
           </div>
 
@@ -132,6 +184,59 @@ export default function CookbookPage() {
               style={{ borderColor:'var(--rule)', background:'var(--paper)' }}
             />
           </div>
+
+          {showNewFolder && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center">
+              <div
+                className="absolute inset-0"
+                style={{ background: "rgba(0,0,0,0.25)" }}
+                onClick={() => setShowNewFolder(false)}
+              />
+              <div
+                className="relative w-[92%] max-w-md rounded-2xl border p-5"
+                style={{ background: "var(--paper)", borderColor: "var(--rule)" }}
+              >
+                <div className="text-lg font-semibold" style={{ color: "var(--ink)" }}>
+                  Nueva carpeta
+                </div>
+                <p className="mt-1 text-sm" style={{ color: "var(--recipe-muted)" }}>
+                  Se creará dentro de la carpeta actual (si estás dentro de una).
+                </p>
+
+                <input
+                  className="mt-4 w-full rounded-xl border px-3 py-2 outline-none"
+                  style={{ background: "transparent", borderColor: "var(--rule)", color: "var(--ink)" }}
+                  placeholder="Ej. Pollo, Postres, Navidad…"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") createFolder()
+                    if (e.key === "Escape") setShowNewFolder(false)
+                  }}
+                  autoFocus
+                />
+
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    className="rounded-xl border px-4 py-2 text-sm"
+                    style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
+                    onClick={() => setShowNewFolder(false)}
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    className="rounded-xl px-4 py-2 text-sm text-white whitespace-nowrap"
+                    style={{ background: "hsl(var(--primary))" }}
+                    onClick={createFolder}
+                  >
+                    Crear
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
 
           {/* Sacar de carpeta */}
           {activeFolderId && draggingRecipeId && (
@@ -149,18 +254,69 @@ export default function CookbookPage() {
             </div>
           )}
 
+          {/* Header de CARPETAS */}
+        <div className="mt-6 flex items-center justify-between">
+          <div
+            className="flex items-center gap-2 text-xs font-semibold tracking-[0.2em]"
+            style={{ color: 'var(--recipe-muted)' }}
+          >
+            <span>📁</span>
+            <span>CARPETAS</span>
+          </div>
+
+          <button
+            className="inline-flex items-center gap-2 text-sm whitespace-nowrap"
+            style={{ color: 'var(--ink)' }}
+            onClick={() => setShowNewFolder(true)}
+          >
+            <Plus className="h-4 w-4 shrink-0" />
+            Nueva carpeta
+          </button>
+        </div>
+
           {/* Folders */}
           <div className="mt-6 grid md:grid-cols-3 gap-4">
             {currentFolders.map(folder=>(
-              <div
+              <button
                 key={folder.id}
-                className="planner-card p-4 cursor-pointer"
-                onClick={()=>setFolderStack(s=>[...s,folder.id])}
-                onDragOver={(e)=>{e.preventDefault();setDragOverFolderId(folder.id)}}
-                onDrop={()=>moveRecipeToFolder(draggingRecipeId!,folder.id)}
+                className="w-full text-left rounded-2xl border p-4 relative overflow-hidden"
+                style={{ borderColor: 'var(--rule)', background: 'var(--paper)' }}
+                onClick={() => setFolderStack((s) => [...s, folder.id])}
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setDragOverFolderId(folder.id)
+                }}
+                onDragLeave={() => setDragOverFolderId(null)}
+                onDrop={() => moveRecipeToFolder(draggingRecipeId!, folder.id)}
               >
-                📁 {folder.name}
-              </div>
+                {/* overlay cuando arrastras encima */}
+                {dragOverFolderId === folder.id && (
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: 'rgba(173,131,101,0.08)',
+                      outline: '2px solid rgba(173,131,101,0.55)',
+                    }}
+                  />
+                )}
+
+                <div className="relative">
+                  <div className="flex items-center justify-center h-[92px] rounded-xl"
+                      style={{ background: 'rgba(173,131,101,0.06)' }}>
+                    <span className="text-3xl opacity-40">📁</span>
+                  </div>
+
+                  <div className="mt-3 font-semibold" style={{ color: 'var(--ink)' }}>
+                    {folder.name}
+                  </div>
+
+                  <div className="mt-1 text-xs" style={{ color: 'var(--recipe-muted)' }}>
+                    {/* si aún no tienes count, deja esto fijo por ahora */}
+                    {/* luego lo conectamos con conteo real */}
+                    Carpeta
+                  </div>
+                </div>
+              </button>
             ))}
           </div>
 
