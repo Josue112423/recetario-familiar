@@ -90,16 +90,21 @@ export default function LibraryPage() {
       {/* Contenedor tipo planner/papel */}
       <section className="planner-card watercolor-paper warm-glow rounded-[24px] border p-6 md:p-8 relative overflow-hidden">
         {/* Decoraciones (usa tus imágenes en public/attached_assets) */}
+        
+        {/* Maceta abajo-izq (como la 2ª) */}
         <img
-          className="recipe-decor recipe-decor-top"
-          src="/attached_assets/decor-kitchen.png"
+          src="/attached_assets/potted-plant.png"
           alt=""
+          className="absolute bottom-[-10px] left-[10px] w-[90px] opacity-90 pointer-events-none"
         />
+
+        {/* Enredadera derecha (como la 2ª) */}
         <img
-          className="recipe-decor recipe-decor-bottom"
-          src="/attached_assets/decor-herbs.png"
+          src="/attached_assets/plant-vine.png"
           alt=""
+          className="absolute right-[-10px] top-[170px] w-[180px] opacity-80 pointer-events-none"
         />
+
 
         <div className="relative z-10">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
