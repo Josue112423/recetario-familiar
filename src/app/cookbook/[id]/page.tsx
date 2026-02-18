@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useParams, useRouter } from 'next/navigation'
+import { ArrowLeft, Plus, Trash2, Search, BookOpen, Clock } from 'lucide-react'
 
 type Recipe = {
   id: string
@@ -23,17 +24,17 @@ export default function CookbookPage() {
   const [cookbook, setCookbook] = useState<Cookbook | null>(null)
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
+  const [q, setQ] = useState('')
 
   const deleteRecipe = async (recipeId: string) => {
-  if (!confirm('¿Eliminar esta receta? Esto no se puede deshacer.')) return
-
-  const { error } = await supabase.from('recipes').delete().eq('id', recipeId)
-  if (error) {
-    alert('No se pudo eliminar. ' + error.message)
-    return
+    if (!confirm('¿Eliminar esta receta? Esto no se puede deshacer.')) return
+    const { error } = await supabase.from('recipes').delete().eq('id', recipeId)
+    if (error) {
+      alert('No se pudo eliminar. ' + error.message)
+      return
+    }
+    setRecipes((prev) => prev.filter((r) => r.id !== recipeId))
   }
-  setRecipes((prev) => prev.filter((r) => r.id !== recipeId))
-}
 
   useEffect(() => {
     const run = async () => {
@@ -63,55 +64,142 @@ export default function CookbookPage() {
     run()
   }, [cookbookId])
 
+  const filtered = useMemo(() => {
+    const s = q.trim().toLowerCase()
+    if (!s) return recipes
+    return recipes.filter((r) => r.title.toLowerCase().includes(s))
+  }, [recipes, q])
+
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <button className="text-sm hover:underline" onClick={() => router.push('/library')}>
-            ← Volver a biblioteca
-          </button>
-          <h1 className="mt-3 text-3xl font-bold">{cookbook?.title ?? 'Recetario'}</h1>
-          <p className="mt-2 ">Índice de recetas</p>
+    <main className="mx-auto max-w-6xl px-4 py-8">
+      <section className="planner-card watercolor-paper warm-glow rounded-[24px] border p-6 md:p-8 relative overflow-hidden">
+        {/* decor (si existen en /public/attached_assets) */}
+        <img
+          src="/attached_assets/plant-vine.png"
+          alt=""
+          className="pointer-events-none absolute right-[-10px] top-[120px] w-[150px] z-[60] opacity-90"
+        />
+
+        <div className="relative z-[20]">
+          {/* Header */}
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <button
+                className="inline-flex items-center gap-2 text-sm hover:underline"
+                onClick={() => router.push('/library')}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Volver a biblioteca
+              </button>
+
+              <div className="mt-3 flex items-center gap-2">
+                <BookOpen className="h-6 w-6 opacity-70" />
+                <h1 className="text-3xl md:text-4xl title-font">
+                  {cookbook?.title ?? 'Recetario'}
+                </h1>
+              </div>
+
+              <p className="mt-2 handwritten text-base" style={{ color: 'var(--recipe-muted)' }}>
+                Índice de recetas
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2 md:justify-end">
+              <button
+                className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm text-white"
+                style={{ background: 'hsl(var(--primary))' }}
+                onClick={() => router.push(`/cookbook/${cookbookId}/new-recipe`)}
+              >
+                <Plus className="h-4 w-4" />
+                Agregar receta
+              </button>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="mt-6 flex items-center gap-2 rounded-2xl border px-4 py-3"
+               style={{ borderColor: 'var(--rule)', background: 'var(--paper)' }}>
+            <Search className="h-4 w-4 opacity-60" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar receta…"
+              className="w-full bg-transparent outline-none text-sm"
+              style={{ color: 'var(--ink)' }}
+            />
+          </div>
+
+          {/* Content */}
+          <div className="mt-6">
+            {loading ? (
+              <p style={{ color: 'var(--recipe-muted)' }}>Cargando…</p>
+            ) : filtered.length === 0 ? (
+              <div
+                className="rounded-2xl border border-dashed p-8 text-center"
+                style={{
+                  borderColor: 'var(--rule)',
+                  color: 'var(--recipe-muted)',
+                  background: 'rgba(255,255,255,0.25)',
+                }}
+              >
+                {recipes.length === 0
+                  ? 'Este recetario todavía no tiene recetas. Agrega la primera ✨'
+                  : 'No encontré recetas con ese nombre.'}
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filtered.map((r) => (
+                  <div key={r.id} className="recipe-card-container">
+                    {/* Delete button (solo visible al hover por tu CSS .recipe-card-delete) */}
+                    <button
+                      className="recipe-card-delete"
+                      onClick={() => deleteRecipe(r.id)}
+                      aria-label="Eliminar receta"
+                      title="Eliminar"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+
+                    <button
+                      className="recipe-card w-full text-left"
+                      onClick={() => router.push(`/recipe/${r.id}`)}
+                      aria-label={`Abrir receta ${r.title}`}
+                    >
+                      <div className="recipe-card-hero">
+                        {/* placeholder bonito */}
+                        <div className="recipe-card-hero-placeholder">
+                          <span className="handwritten text-sm" style={{ color: 'var(--recipe-muted)' }}>
+                            {r.title.slice(0, 1).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="recipe-card-hero-fade" />
+                      </div>
+
+                      <div className="recipe-card-body">
+                        <div className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
+                          {r.title}
+                        </div>
+
+                        <div className="mt-2 recipe-card-meta">
+                          <Clock className="h-3.5 w-3.5 opacity-60" />
+                          <span>{new Date(r.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        <button
-          className="rounded-xl bg-slate-900 px-4 py-3 text-white hover:opacity-90"
-          onClick={() => router.push(`/cookbook/${cookbookId}/new-recipe`)}
-        >
-          + Agregar receta
-        </button>
-      </div>
-
-      <div className="mt-8 rounded-2xl border bg-white p-6 shadow-sm">
-        {loading ? (
-          <p className="text-slate-800">Cargando…</p>
-        ) : recipes.length === 0 ? (
-          <p className="text-slate-800">Este recetario todavía no tiene recetas. Agrega la primera ✨</p>
-        ) : (
-          <ul className="divide-y">
-            {recipes.map((r) => (
-              <li key={r.id} className="py-4">
-                <div className="flex items-center justify-between gap-3">
-                    <button
-                        className="flex-1 rounded-lg px-2 py-2 text-left text-slate-900 hover:bg-slate-100 hover:underline"
-                        onClick={() => router.push(`/recipe/${r.id}`)}
-                    >
-                     <div className="text-lg font-semibold">{r.title}</div>
-                     <div className="text-sm text-slate-700">{new Date(r.created_at).toLocaleString()}</div>
-                    </button>
-
-                    <button
-                        className="rounded-xl border px-3 py-2 text-sm text-rose-700 hover:bg-rose-50"
-                        onClick={() => deleteRecipe(r.id)}
-                    >
-                        Eliminar
-                    </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+        {/* Maceta (si existe). La dejamos al frente y casi al nivel del estante si luego lo agregas aquí */}
+        <img
+          src="/attached_assets/potted-plant.png"
+          alt=""
+          className="pointer-events-none absolute bottom-[10px] left-[14px] w-[92px] z-[60] opacity-90"
+        />
+      </section>
     </main>
   )
 }
