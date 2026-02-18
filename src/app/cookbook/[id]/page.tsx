@@ -3,17 +3,23 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Trash2, Search, BookOpen, Clock } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Search, Clock } from 'lucide-react'
 
 type Recipe = {
   id: string
   title: string
   created_at: string
+  folder_id: string | null
+  prep_time_min: number | null
+  cook_time_min: number | null
+  servings: number | null
+  difficulty: string | null
 }
 
-type Cookbook = {
+type RecipeFolder = {
   id: string
-  title: string
+  name: string
+  parent_folder_id: string | null
 }
 
 export default function CookbookPage() {
@@ -21,175 +27,186 @@ export default function CookbookPage() {
   const params = useParams<{ id: string }>()
   const cookbookId = params.id
 
-  const [cookbook, setCookbook] = useState<Cookbook | null>(null)
   const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [folders, setFolders] = useState<RecipeFolder[]>([])
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState('')
 
-  const deleteRecipe = async (recipeId: string) => {
-    if (!confirm('¿Eliminar esta receta? Esto no se puede deshacer.')) return
-    const { error } = await supabase.from('recipes').delete().eq('id', recipeId)
-    if (error) {
-      alert('No se pudo eliminar. ' + error.message)
-      return
-    }
-    setRecipes((prev) => prev.filter((r) => r.id !== recipeId))
+  const [folderStack, setFolderStack] = useState<string[]>([])
+  const activeFolderId = folderStack.at(-1) ?? null
+
+  const [draggingRecipeId, setDraggingRecipeId] = useState<string | null>(null)
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
+  const [dragOverRemove, setDragOverRemove] = useState(false)
+
+  const refresh = async () => {
+    const { data: rs } = await supabase
+      .from('recipes')
+      .select('id,title,created_at,folder_id,prep_time_min,cook_time_min,servings,difficulty')
+      .eq('cookbook_id', cookbookId)
+      .order('created_at', { ascending: false })
+
+    const { data: fs } = await supabase
+      .from('recipe_folders')
+      .select('id,name,parent_folder_id')
+      .eq('cookbook_id', cookbookId)
+
+    setRecipes((rs ?? []) as Recipe[])
+    setFolders((fs ?? []) as RecipeFolder[])
   }
 
   useEffect(() => {
-    const run = async () => {
-      setLoading(true)
+  const run = async () => {
+    setLoading(true)
+    await refresh()
+    setLoading(false)
+  }
 
-      const { data: cb, error: cbErr } = await supabase
-        .from('cookbooks')
-        .select('id,title')
-        .eq('id', cookbookId)
-        .single()
+  run()
+}, [cookbookId])
 
-      if (cbErr) console.error(cbErr)
-      setCookbook(cb ?? null)
+  const totalMinutes = (r: Recipe) =>
+    (r.prep_time_min ?? 0) + (r.cook_time_min ?? 0)
 
-      const { data: rs, error: rErr } = await supabase
-        .from('recipes')
-        .select('id,title,created_at')
-        .eq('cookbook_id', cookbookId)
-        .order('created_at', { ascending: false })
+  const difficultyIcons = (d?: string | null) => {
+    if (!d) return 1
+    const v = d.toLowerCase()
+    if (v.includes('dif')) return 3
+    if (v.includes('med')) return 2
+    return 1
+  }
 
-      if (rErr) console.error(rErr)
-      setRecipes((rs ?? []) as Recipe[])
-
-      setLoading(false)
-    }
-
-    run()
-  }, [cookbookId])
-
-  const filtered = useMemo(() => {
+  const filteredRecipes = useMemo(() => {
+    const list = recipes.filter(r =>
+      activeFolderId ? r.folder_id === activeFolderId : !r.folder_id
+    )
     const s = q.trim().toLowerCase()
-    if (!s) return recipes
-    return recipes.filter((r) => r.title.toLowerCase().includes(s))
-  }, [recipes, q])
+    if (!s) return list
+    return list.filter(r => r.title.toLowerCase().includes(s))
+  }, [recipes, q, activeFolderId])
+
+  const currentFolders = folders.filter(f =>
+    activeFolderId ? f.parent_folder_id === activeFolderId : !f.parent_folder_id
+  )
+
+  const moveRecipeToFolder = async (recipeId: string, folderId: string | null) => {
+    await supabase.from('recipes').update({ folder_id: folderId }).eq('id', recipeId)
+    refresh()
+  }
+
+  const deleteRecipe = async (recipeId: string) => {
+    if (!confirm('¿Eliminar esta receta?')) return
+    await supabase.from('recipes').delete().eq('id', recipeId)
+    setRecipes(prev => prev.filter(r => r.id !== recipeId))
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <section className="planner-card watercolor-paper warm-glow rounded-[24px] border p-6 md:p-8 relative overflow-hidden">
-        {/* decor (si existen en /public/attached_assets) */}
 
-        <div className="relative z-[20]">
+        <div className="relative z-20">
+
           {/* Header */}
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div>
-              <button
-                className="inline-flex items-center gap-2 text-sm hover:underline"
-                onClick={() => router.push('/library')}
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Volver a biblioteca
-              </button>
+          <div className="flex justify-between items-center">
+            <button onClick={() => router.push('/library')} className="flex items-center gap-2">
+              <ArrowLeft size={16}/> Volver a biblioteca
+            </button>
 
-              <div className="mt-3 flex items-center gap-2">
-                <BookOpen className="h-6 w-6 opacity-70" />
-                <h1 className="text-3xl md:text-4xl title-font">
-                  {cookbook?.title ?? 'Recetario'}
-                </h1>
-              </div>
-
-              <p className="mt-2 handwritten text-base" style={{ color: 'var(--recipe-muted)' }}>
-                Índice de recetas
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2 md:justify-end">
-              <button
-                className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm text-white"
-                style={{ background: 'hsl(var(--primary))' }}
-                onClick={() => router.push(`/cookbook/${cookbookId}/new-recipe`)}
-              >
-                <Plus className="h-4 w-4" />
-                Agregar receta
-              </button>
-            </div>
+            <button
+              onClick={() => router.push(`/cookbook/${cookbookId}/new`)}
+              className="rounded-xl px-4 py-2 text-white"
+              style={{ background: 'hsl(var(--primary))' }}
+            >
+              <Plus size={16}/> Agregar receta
+            </button>
           </div>
 
           {/* Search */}
-          <div className="mt-6 flex items-center gap-2 rounded-2xl border px-4 py-3"
-               style={{ borderColor: 'var(--rule)', background: 'var(--paper)' }}>
-            <Search className="h-4 w-4 opacity-60" />
+          <div className="mt-4 relative">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 opacity-60"/>
             <input
               value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Buscar receta…"
-              className="w-full bg-transparent outline-none text-sm"
-              style={{ color: 'var(--ink)' }}
+              onChange={(e)=>setQ(e.target.value)}
+              placeholder="Buscar recetas y carpetas..."
+              className="w-full rounded-xl border pl-9 pr-3 py-2"
+              style={{ borderColor:'var(--rule)', background:'var(--paper)' }}
             />
           </div>
 
-          {/* Content */}
-          <div className="mt-6">
-            {loading ? (
-              <p style={{ color: 'var(--recipe-muted)' }}>Cargando…</p>
-            ) : filtered.length === 0 ? (
+          {/* Sacar de carpeta */}
+          {activeFolderId && draggingRecipeId && (
+            <div
+              className="mt-4 p-3 rounded-xl text-center text-sm"
+              onDragOver={(e)=>{e.preventDefault();setDragOverRemove(true)}}
+              onDragLeave={()=>setDragOverRemove(false)}
+              onDrop={()=>moveRecipeToFolder(draggingRecipeId,null)}
+              style={{
+                border:'1px dashed #ad8365',
+                background:dragOverRemove?'rgba(173,131,101,0.25)':'rgba(173,131,101,0.08)'
+              }}
+            >
+              Sacar de carpeta
+            </div>
+          )}
+
+          {/* Folders */}
+          <div className="mt-6 grid md:grid-cols-3 gap-4">
+            {currentFolders.map(folder=>(
               <div
-                className="rounded-2xl border border-dashed p-8 text-center"
-                style={{
-                  borderColor: 'var(--rule)',
-                  color: 'var(--recipe-muted)',
-                  background: 'rgba(255,255,255,0.25)',
-                }}
+                key={folder.id}
+                className="planner-card p-4 cursor-pointer"
+                onClick={()=>setFolderStack(s=>[...s,folder.id])}
+                onDragOver={(e)=>{e.preventDefault();setDragOverFolderId(folder.id)}}
+                onDrop={()=>moveRecipeToFolder(draggingRecipeId!,folder.id)}
               >
-                {recipes.length === 0
-                  ? 'Este recetario todavía no tiene recetas. Agrega la primera ✨'
-                  : 'No encontré recetas con ese nombre.'}
+                📁 {folder.name}
               </div>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {filtered.map((r) => (
-                  <div key={r.id} className="recipe-card-container">
-                    {/* Delete button (solo visible al hover por tu CSS .recipe-card-delete) */}
-                    <button
-                      className="recipe-card-delete"
-                      onClick={() => deleteRecipe(r.id)}
-                      aria-label="Eliminar receta"
-                      title="Eliminar"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-
-                    <button
-                      className="recipe-card w-full text-left"
-                      onClick={() => router.push(`/recipe/${r.id}`)}
-                      aria-label={`Abrir receta ${r.title}`}
-                    >
-                      <div className="recipe-card-hero">
-                        {/* placeholder bonito */}
-                        <div className="recipe-card-hero-placeholder">
-                          <span className="handwritten text-sm" style={{ color: 'var(--recipe-muted)' }}>
-                            {r.title.slice(0, 1).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="recipe-card-hero-fade" />
-                      </div>
-
-                      <div className="recipe-card-body">
-                        <div className="text-base font-semibold" style={{ color: 'var(--ink)' }}>
-                          {r.title}
-                        </div>
-
-                        <div className="mt-2 recipe-card-meta">
-                          <Clock className="h-3.5 w-3.5 opacity-60" />
-                          <span>{new Date(r.created_at).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
-        </div>
 
-        {/* Maceta (si existe). La dejamos al frente y casi al nivel del estante si luego lo agregas aquí */}
-       
+          {/* Recipes */}
+          <div className="mt-6 grid md:grid-cols-2 gap-4">
+            {filteredRecipes.map(r=>(
+              <div
+                key={r.id}
+                draggable
+                onDragStart={(e)=>{
+                  e.dataTransfer.setData('text/plain',r.id)
+                  setDraggingRecipeId(r.id)
+                }}
+                className="recipe-card-container relative"
+              >
+                <button
+                  className="recipe-card-delete"
+                  onClick={()=>deleteRecipe(r.id)}
+                >
+                  <Trash2 size={14}/>
+                </button>
+
+                <button
+                  onClick={()=>router.push(`/recipe/${r.id}`)}
+                  className="recipe-card w-full text-left"
+                >
+                  <div className="recipe-card-body">
+                    <div className="font-semibold">{r.title}</div>
+
+                    <div className="mt-2 text-xs opacity-70 flex gap-3">
+                      <span>⏱️ {totalMinutes(r)} min</span>
+                      <span>👥 {r.servings ?? '-'}</span>
+                    </div>
+
+                    <div className="mt-2 border-t opacity-30"/>
+
+                    <div className="mt-2 text-xs">
+                      {'🔥'.repeat(difficultyIcons(r.difficulty))}
+                    </div>
+                  </div>
+                </button>
+              </div>
+            ))}
+          </div>
+
+        </div>
       </section>
     </main>
   )
