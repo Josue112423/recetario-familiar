@@ -96,7 +96,7 @@ export default function LibraryPage() {
         <img
           src="/attached_assets/potted-plant.png"
           alt=""
-          className="pointer-events-none absolute bottom-[10px] left-[12px] w-[92px] z-[60]"
+          className="pointer-events-none absolute bottom-[16px] left-[24px] w-[92px] z-[60]"
         />
 
 
