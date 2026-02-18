@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
+import { BookOpen, Share2, Copy } from "lucide-react"
 
 type Cookbook = {
   id: string
@@ -95,20 +96,24 @@ export default function LibraryPage() {
         <img
           src="/attached_assets/potted-plant.png"
           alt=""
-          className="pointer-events-none absolute bottom-[8px] left-[18px] w-[92px] z-[60]"
+          className="pointer-events-none absolute bottom-[10px] left-[12px] w-[92px] z-[60]"
         />
 
 
         <img
           src="/attached_assets/plant-vine.png"
           alt=""
-          className="pointer-events-none absolute right-[-8px] top-[190px] w-[130px] z-[60] opacity-90"
+          className="pointer-events-none absolute right-[-8px] top-[190px] w-[110px] z-[60] opacity-90"
         />
 
         <div className="relative z-10">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <h1 className="text-3xl md:text-4xl title-font">Biblioteca familiar</h1>
+              <h1 className="flex items-center gap-2 text-3xl md:text-4xl title-font">
+                <BookOpen className="w-6 h-6 opacity-70" />
+                Biblioteca familiar
+              </h1>
+
               <p className="mt-2 text-[13px] md:text-sm" style={{ color: 'var(--recipe-muted)' }}>
                 Tus recetarios como libros en un estante.
               </p>
@@ -170,7 +175,7 @@ export default function LibraryPage() {
                   </button>
 
                   <button
-                    className="rounded-xl px-4 py-2 text-sm text-white"
+                    className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm text-white"
                     style={{ background: 'hsl(var(--primary))' }}
                     onClick={async () => {
                       const text = `Únete a nuestro recetario familiar. Código: ${familyCode}\nLink: ${window.location.origin}/join`
@@ -182,6 +187,7 @@ export default function LibraryPage() {
                       }
                     }}
                   >
+                    <Share2 className="w-4 h-4" />
                     Compartir
                   </button>
                 </div>
