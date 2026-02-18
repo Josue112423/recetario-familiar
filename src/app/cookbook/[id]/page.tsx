@@ -74,11 +74,6 @@ export default function CookbookPage() {
     <main className="mx-auto max-w-6xl px-4 py-8">
       <section className="planner-card watercolor-paper warm-glow rounded-[24px] border p-6 md:p-8 relative overflow-hidden">
         {/* decor (si existen en /public/attached_assets) */}
-        <img
-          src="/attached_assets/plant-vine.png"
-          alt=""
-          className="pointer-events-none absolute right-[-10px] top-[120px] w-[150px] z-[60] opacity-90"
-        />
 
         <div className="relative z-[20]">
           {/* Header */}
@@ -194,11 +189,7 @@ export default function CookbookPage() {
         </div>
 
         {/* Maceta (si existe). La dejamos al frente y casi al nivel del estante si luego lo agregas aquí */}
-        <img
-          src="/attached_assets/potted-plant.png"
-          alt=""
-          className="pointer-events-none absolute bottom-[10px] left-[14px] w-[92px] z-[60] opacity-90"
-        />
+       
       </section>
     </main>
   )
