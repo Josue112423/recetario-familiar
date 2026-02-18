@@ -15,6 +15,7 @@ type Recipe = {
   cook_time_min: number | null
   servings: number | null
   difficulty: string | null
+  ingredients_text: string
 }
 
 type RecipeFolder = {
@@ -57,7 +58,7 @@ export default function CookbookPage() {
 
     const { data: rs } = await supabase
       .from('recipes')
-      .select('id,title,created_at,folder_id,prep_time_min,cook_time_min,servings,difficulty')
+      .select('id,title,created_at,folder_id,prep_time_min,cook_time_min,servings,difficulty,ingredients_text')
       .eq('cookbook_id', cookbookId)
       .order('created_at', { ascending: false })
 
@@ -82,6 +83,26 @@ export default function CookbookPage() {
 
   const totalMinutes = (r: Recipe) =>
     (r.prep_time_min ?? 0) + (r.cook_time_min ?? 0)
+
+  const ingredientCount = (txt?: string | null) => {
+    const lines = (txt ?? "")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0)
+    return lines.length
+  }
+
+  const difficultyLevel = (d?: string | null) => {
+    const v = (d ?? "").toLowerCase()
+    if (v.includes("dif")) return 3
+    if (v.includes("med")) return 2
+    if (v.includes("fac")) return 1
+    // si alguien puso "hard/medium/easy"
+    if (v.includes("hard")) return 3
+    if (v.includes("medium")) return 2
+    if (v.includes("easy")) return 1
+    return 1
+  }
 
   const difficultyIcons = (d?: string | null) => {
     if (!d) return 1
@@ -360,10 +381,16 @@ export default function CookbookPage() {
               <div
                 key={r.id}
                 draggable
-                onDragStart={(e)=>{
-                  e.dataTransfer.setData('text/plain',r.id)
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("text/plain", r.id)
                   setDraggingRecipeId(r.id)
                 }}
+                onDragEnd={() => {
+                  setDraggingRecipeId(null)
+                  setDragOverFolderId(null)
+                  setDragOverRemove(false)
+                }}
+                
                 className="recipe-card-container relative"
               >
                 <button
@@ -380,27 +407,32 @@ export default function CookbookPage() {
                   <div className="recipe-card-body">
                     <div className="font-semibold">{r.title}</div>
 
-                    <div className="mt-2 text-xs opacity-70 flex gap-3">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5 opacity-60"/>
-                        {totalMinutes(r)} min
-                      </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-3 text-xs" style={{ color: "var(--recipe-muted)" }}>
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5 opacity-60" />
+                        {totalMinutes(r) ? `${totalMinutes(r)} min` : "—"}
+                      </span>
 
-                      <div className="flex items-center gap-1">
-                        <Users className="h-3.5 w-3.5 opacity-60"/>
-                        {r.servings ?? '-'} porc.
-                      </div>
+                      <span className="inline-flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5 opacity-60" />
+                        {r.servings ?? "—"} porciones
+                      </span>
 
+                      <span>
+                        {ingredientCount(r.ingredients_text) || "—"} ingredientes
+                      </span>
                     </div>
 
-                    <div className="mt-2 border-t opacity-30"/>
+                    <div className="mt-2 border-t" style={{ borderColor: "var(--rule2)" }} />
 
-                    <div className="flex gap-1 opacity-70">
-                      {Array.from({ length: difficultyIcons(r.difficulty) }).map((_, i) => (
-                        <Flame key={i} className="h-3.5 w-3.5"/>
-                      ))}
+                    <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: "var(--recipe-muted)" }}>
+                      <span className="inline-flex items-center gap-1">
+                        {Array.from({ length: difficultyLevel(r.difficulty) }).map((_, i) => (
+                          <Flame key={i} className="h-3.5 w-3.5 opacity-70" />
+                        ))}
+                      </span>
+                      <span>{r.difficulty ?? "Fácil"}</span>
                     </div>
-
                   </div>
                 </button>
               </div>
