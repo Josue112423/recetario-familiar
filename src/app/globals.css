@@ -445,6 +445,27 @@ h1, h2, h3, h4, h5, h6,
   background: transparent;
 }
 
+.spec-pill{
+  margin-top: 6px;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-style: italic;
+  background: rgba(173,131,101,0.12);
+  border: 1px solid rgba(40,35,30,0.10);
+  color: rgba(40,35,30,0.72);
+}
+
+.ingredient-dot {
+  background: rgba(173,131,101,0.25);
+  transition: all 0.25s ease;
+}
+
+.group:hover .ingredient-dot {
+  transform: scale(1.1);
+}
+
+
 /* ================= ANIMATIONS ================= */
 
 @keyframes fadeSlideUp {

@@ -65,7 +65,19 @@ function parseSteps(stepsText: string): StepItem[] {
 }
 
   return (
-    <div className="relative mx-auto max-w-5xl">
+    <section
+      className="
+        planner-card
+        watercolor-paper
+        warm-glow
+        rounded-[28px]
+        border
+        p-6 md:p-8
+        relative
+        overflow-hidden
+      "
+      style={{ borderColor: 'var(--rule)' }}
+    >
       {/* CARD */}
       <motion.div
         initial={{ opacity: 0, y: 18 }}
@@ -168,21 +180,37 @@ function parseSteps(stepsText: string): StepItem[] {
 
               <div className="planner-divider rounded-3xl border bg-white/30 p-8">
                 <ol className="space-y-6 text-sm leading-relaxed">
-                  {st.map((s, idx) => (
-                    <li key={idx} className="flex gap-4">
-                      <span className="step-badge">{idx + 1}</span>
+                  {st.map((item, idx) => {
+                    const text = item.text ?? "" // <- aquí está el string real
 
-                      <div className="pt-1 flex-1">
-                        <div className="text-[color:var(--ink)]/90">{s.text}</div>
+                    const isSpec = /^\[(?:especificaciones|spec)\s*:/i.test(text)
 
-                        {s.spec && (
-                          <div className="spec-pill mt-2">
-                            {s.spec}
+                    if (isSpec) {
+                      const clean = text
+                        .replace(/^\[(?:especificaciones|spec)\s*:/i, "")
+                        .replace(/\]$/, "")
+                        .trim()
+
+                      return (
+                        <li key={idx} className="flex gap-4">
+                          <span className="step-badge">{idx + 1}</span>
+                          <div className="pt-1 flex-1">
+                            <div className="spec-pill">{clean}</div>
                           </div>
-                        )}
-                      </div>
-                    </li>
-                  ))}
+                        </li>
+                      )
+                    }
+
+                    return (
+                      <li key={idx} className="flex gap-4">
+                        <span className="step-badge">{idx + 1}</span>
+                        <div className="pt-1 flex-1">
+                          <div className="text-[color:var(--ink)]/90">{text}</div>
+                        </div>
+                      </li>
+                    )
+                  })}
+
                   {st.length === 0 && (
                     <li className="italic text-[color:var(--muted)]">No hay pasos.</li>
                   )}
@@ -208,21 +236,36 @@ function parseSteps(stepsText: string): StepItem[] {
       {/* Desktop Side Buttons (como Replit) */}
       <div className="hidden md:flex flex-col gap-2 absolute right-[-10px] top-[140px] z-30">
         {onEdit && (
-          <button type="button" className="side-tab" onClick={onEdit}>
+          <button type="button" className="side-tab" onClick={onEdit}
+          style={{
+            background: '#a97d5f', // café bonito
+            color: '#fff'
+          }}
+          >
             Editar
           </button>
         )}
         {onCook && (
-          <button type="button" className="side-tab" onClick={onCook}>
+          <button type="button" className="side-tab" onClick={onCook}
+          style={{
+            background: '#a97d5f', // café bonito
+            color: '#fff'
+          }}
+          >
             Cocinar
           </button>
         )}
-        <button type="button" className="side-tab opacity-80" onClick={() => alert("Video coming soon")}>
+        <button type="button" className="side-tab opacity-80" onClick={() => alert("Video coming soon")}
+          style={{
+            background: '#a97d5f', // café bonito
+            color: '#fff'
+          }}
+          >
           Video
         </button>
       </div>
 
-      {/* Mobile FABs */}
+      {/* Mobile FABs 
       <div className="fixed bottom-24 right-6 z-50 flex flex-col gap-3 xl:hidden">
         {onEdit && (
           <button
@@ -245,6 +288,7 @@ function parseSteps(stepsText: string): StepItem[] {
           </button>
         )}
       </div>
-    </div>
+      */}
+    </section>
   )
 }
