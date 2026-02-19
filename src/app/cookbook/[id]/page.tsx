@@ -390,7 +390,7 @@ export default function CookbookPage() {
                   setDragOverFolderId(null)
                   setDragOverRemove(false)
                 }}
-                
+
                 className="recipe-card-container relative"
               >
                 <button
@@ -415,11 +415,11 @@ export default function CookbookPage() {
 
                       <span className="inline-flex items-center gap-1">
                         <Users className="h-3.5 w-3.5 opacity-60" />
-                        {r.servings ?? "—"} porciones
+                        {r.servings ?? "—"} porc.
                       </span>
 
                       <span>
-                        {ingredientCount(r.ingredients_text) || "—"} ingredientes
+                        {ingredientCount(r.ingredients_text) || "—"} ingr.
                       </span>
                     </div>
 

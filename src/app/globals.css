@@ -424,6 +424,26 @@ h1, h2, h3, h4, h5, h6,
   background: rgba(173,131,101,0.06);
 }
 
+/* ================= Recepies ================= */
+
+.step-badge{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:32px;
+  width:32px;
+  border-radius:999px;
+  background: rgba(173,131,101,0.08);
+  border: 1px solid rgba(40,35,30,0.16);
+  color: rgba(40,35,30,0.72);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ingredient-dot{
+  border: 2px solid rgba(173,131,101,0.28);
+  background: transparent;
+}
 
 /* ================= ANIMATIONS ================= */
 

@@ -35,7 +35,34 @@ export function RecipeSheet({
   onCook,
 }: RecipeSheetProps) {
   const ing = parseLines(ingredients)
-  const st = parseLines(steps)
+  const st = parseSteps(steps)
+
+type StepItem = { text: string; spec?: string }
+
+function parseSteps(stepsText: string): StepItem[] {
+  const lines = (stepsText ?? "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+
+  const out: StepItem[] = []
+  for (const line of lines) {
+    const specOnly = line.match(/^\[(?:especificaciones|spec)\s*:\s*(.+)\]$/i)
+    if (specOnly) {
+      // si viene la especificación sola, se pega al paso anterior
+      if (out.length) out[out.length - 1].spec = specOnly[1].trim()
+      continue
+    }
+
+    const inline = line.match(/^(.*?)(?:\s*\[(?:especificaciones|spec)\s*:\s*(.+)\])$/i)
+    if (inline) {
+      out.push({ text: inline[1].trim(), spec: inline[2].trim() })
+    } else {
+      out.push({ text: line })
+    }
+  }
+  return out
+}
 
   return (
     <div className="relative mx-auto max-w-5xl">
@@ -93,7 +120,8 @@ export function RecipeSheet({
           {/* LEFT */}
           <div className="space-y-8 lg:col-span-5">
             {photoUrl ? (
-              <div className="planner-divider aspect-[4/3] overflow-hidden rounded-3xl border bg-white shadow-inner">
+              <div className="planner-divider relative aspect-[4/3] overflow-hidden rounded-3xl border bg-white shadow-inner">
+
                 {/* IMPORTANTE: para URLs remotas de Supabase, asegúrate de tener next.config.js domains */}
                 <Image
                   src={photoUrl}
@@ -119,7 +147,7 @@ export function RecipeSheet({
                 <ul className="space-y-4 text-sm">
                   {ing.map((line, i) => (
                     <li key={i} className="group flex items-start gap-3">
-                      <span className="mt-1.5 inline-flex h-3 w-3 flex-shrink-0 rounded-full border-2 border-[#ad8365]/30 transition-colors group-hover:bg-[#ad8365]" />
+                      <span className="ingredient-dot mt-1.5 inline-flex h-3 w-3 flex-shrink-0 rounded-full" />
                       <span className="leading-relaxed text-[color:var(--ink)]/80">{line}</span>
                     </li>
                   ))}
@@ -140,12 +168,19 @@ export function RecipeSheet({
 
               <div className="planner-divider rounded-3xl border bg-white/30 p-8">
                 <ol className="space-y-6 text-sm leading-relaxed">
-                  {st.map((line, idx) => (
+                  {st.map((s, idx) => (
                     <li key={idx} className="flex gap-4">
-                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#ad8365]/10 text-xs font-bold text-[#ad8365]">
-                        {idx + 1}
-                      </span>
-                      <span className="pt-1 text-[color:var(--ink)]/90">{line}</span>
+                      <span className="step-badge">{idx + 1}</span>
+
+                      <div className="pt-1 flex-1">
+                        <div className="text-[color:var(--ink)]/90">{s.text}</div>
+
+                        {s.spec && (
+                          <div className="spec-pill mt-2">
+                            {s.spec}
+                          </div>
+                        )}
+                      </div>
                     </li>
                   ))}
                   {st.length === 0 && (
@@ -171,30 +206,20 @@ export function RecipeSheet({
       </motion.div>
 
       {/* Desktop Side Buttons (como Replit) */}
-      <div className="hidden xl:flex flex-col absolute -right-20 top-20 gap-4">
+      <div className="hidden md:flex flex-col gap-2 absolute right-[-10px] top-[140px] z-30">
         {onEdit && (
-          <motion.button
-            type="button"
-            whileHover={{ x: 6 }}
-            onClick={onEdit}
-            className="rounded-r-2xl px-4 py-8 text-sm font-bold tracking-widest uppercase text-white bg-[#ad8365] shadow-lg shadow-[#ad8365]/20 hover:bg-[#8f6b54] transition-colors"
-            style={{ writingMode: 'vertical-rl' }}
-          >
+          <button type="button" className="side-tab" onClick={onEdit}>
             Editar
-          </motion.button>
+          </button>
         )}
-
         {onCook && (
-          <motion.button
-            type="button"
-            whileHover={{ x: 6 }}
-            onClick={onCook}
-            className="rounded-r-2xl px-4 py-8 text-sm font-bold tracking-widest uppercase text-white bg-[#ad8365] shadow-lg shadow-[#ad8365]/20 hover:bg-[#8f6b54] transition-colors"
-            style={{ writingMode: 'vertical-rl' }}
-          >
+          <button type="button" className="side-tab" onClick={onCook}>
             Cocinar
-          </motion.button>
+          </button>
         )}
+        <button type="button" className="side-tab opacity-80" onClick={() => alert("Video coming soon")}>
+          Video
+        </button>
       </div>
 
       {/* Mobile FABs */}
