@@ -234,7 +234,7 @@ function parseSteps(stepsText: string): StepItem[] {
       </motion.div>
 
       {/* Desktop Side Buttons (como Replit) */}
-      <div className="hidden md:flex flex-col gap-2 absolute right-[-10px] top-[140px] z-30">
+      <div className="hidden md:flex flex-col gap-2 relative right-[-10px] top-[140px] z-30">
         {onEdit && (
           <button type="button" className="side-tab" onClick={onEdit}
           style={{
