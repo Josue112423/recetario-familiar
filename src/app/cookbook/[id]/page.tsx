@@ -203,7 +203,7 @@ export default function CookbookPage() {
             </div>
 
             <button
-              onClick={() => router.push(`/cookbook/${cookbookId}/new`)}
+              onClick={() => router.push(`/cookbook/${cookbookId}/new-recipe`)}
               className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm text-white whitespace-nowrap"
               style={{ background: 'hsl(var(--primary))' }}
             >
