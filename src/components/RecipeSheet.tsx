@@ -1,12 +1,39 @@
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Edit2, Utensils } from 'lucide-react'
+import { Utensils } from 'lucide-react'
 
 function parseLines(text: string): string[] {
   return text
     .split('\n')
     .map((s) => s.trim())
     .filter(Boolean)
+}
+
+type StepItem = { text: string; spec?: string }
+
+// FIX: parseSteps movida FUERA del componente para que esté disponible antes de usarse
+function parseSteps(stepsText: string): StepItem[] {
+  const lines = (stepsText ?? '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+
+  const out: StepItem[] = []
+  for (const line of lines) {
+    const specOnly = line.match(/^\[(?:especificaciones|spec)\s*:\s*(.+)\]$/i)
+    if (specOnly) {
+      if (out.length) out[out.length - 1].spec = specOnly[1].trim()
+      continue
+    }
+
+    const inline = line.match(/^(.*?)(?:\s*\[(?:especificaciones|spec)\s*:\s*(.+)\])$/i)
+    if (inline) {
+      out.push({ text: inline[1].trim(), spec: inline[2].trim() })
+    } else {
+      out.push({ text: line })
+    }
+  }
+  return out
 }
 
 type RecipeSheetProps = {
@@ -37,258 +64,189 @@ export function RecipeSheet({
   const ing = parseLines(ingredients)
   const st = parseSteps(steps)
 
-type StepItem = { text: string; spec?: string }
-
-function parseSteps(stepsText: string): StepItem[] {
-  const lines = (stepsText ?? "")
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean)
-
-  const out: StepItem[] = []
-  for (const line of lines) {
-    const specOnly = line.match(/^\[(?:especificaciones|spec)\s*:\s*(.+)\]$/i)
-    if (specOnly) {
-      // si viene la especificación sola, se pega al paso anterior
-      if (out.length) out[out.length - 1].spec = specOnly[1].trim()
-      continue
-    }
-
-    const inline = line.match(/^(.*?)(?:\s*\[(?:especificaciones|spec)\s*:\s*(.+)\])$/i)
-    if (inline) {
-      out.push({ text: inline[1].trim(), spec: inline[2].trim() })
-    } else {
-      out.push({ text: line })
-    }
-  }
-  return out
-}
-
   return (
-    <section
-      className="
-        planner-card
-        watercolor-paper
-        warm-glow
-        rounded-[28px]
-        border
-        p-6 md:p-8
-        relative
-        overflow-hidden
-      "
-      style={{ borderColor: 'var(--rule)' }}
-    >
-      {/* CARD */}
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="planner-card relative z-10 rounded-[34px] p-6 md:p-12"
+    // FIX: El wrapper externo ya NO tiene overflow-hidden para que los side-tabs
+    // puedan salir hacia la derecha sin ser recortados.
+    // También cambiamos a position:relative con un wrapper flex para los tabs.
+    <div className="relative">
+      <section
+        className="
+          planner-card
+          watercolor-paper
+          warm-glow
+          rounded-[28px]
+          border
+          p-6 md:p-8
+        "
+        style={{ borderColor: 'var(--rule)' }}
       >
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <div className="mb-2 text-xs font-bold tracking-widest text-[#ad8365] uppercase">
-              Recetario familiar
-            </div>
-            <h1 className="title-font text-4xl font-bold tracking-tight md:text-5xl">
-              {title}
-            </h1>
-          </div>
-
-          {/* mini tabs decorativas */}
-          <div className="hidden flex-col items-end gap-2 text-[10px] font-bold tracking-widest text-[color:var(--muted)] md:flex">
-            <div className="planner-divider rounded-full border px-4 py-1.5 uppercase">Recipes</div>
-            <div className="planner-divider rounded-full border px-4 py-1.5 uppercase">Family</div>
-          </div>
-        </div>
-
-        {/* Meta row */}
-        <div className="grid grid-cols-3 gap-4 text-xs text-[color:var(--muted)] md:text-sm">
-          <div className="planner-divider rounded-2xl border bg-white/50 px-4 py-3">
-            <div className="mb-1 text-[10px] font-bold tracking-wider uppercase text-[color:var(--ink)]">
-              Prep
-            </div>
-            <div className="text-lg text-[#ad8365]">{metaLeft ?? '—'}</div>
-          </div>
-          <div className="planner-divider rounded-2xl border bg-white/50 px-4 py-3">
-            <div className="mb-1 text-[10px] font-bold tracking-wider uppercase text-[color:var(--ink)]">
-              Cook
-            </div>
-            <div className="text-lg text-[#ad8365]">{metaMid ?? '—'}</div>
-          </div>
-          <div className="planner-divider rounded-2xl border bg-white/50 px-4 py-3">
-            <div className="mb-1 text-[10px] font-bold tracking-wider uppercase text-[color:var(--ink)]">
-              Serves
-            </div>
-            <div className="text-lg text-[#ad8365]">{metaRight ?? '—'}</div>
-          </div>
-        </div>
-
-        <div className="planner-divider mt-8 border-t" />
-
-        {/* Main grid */}
-        <div className="mt-8 grid gap-10 lg:grid-cols-12">
-          {/* LEFT */}
-          <div className="space-y-8 lg:col-span-5">
-            {photoUrl ? (
-              <div className="planner-divider relative aspect-[4/3] overflow-hidden rounded-3xl border bg-white shadow-inner">
-
-                {/* IMPORTANTE: para URLs remotas de Supabase, asegúrate de tener next.config.js domains */}
-                <Image
-                  src={photoUrl}
-                  alt={`Foto de ${title}`}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 40vw"
-                  className="object-cover transition-transform duration-700 hover:scale-105"
-                  priority
-                />
-              </div>
-            ) : (
-              <div className="planner-divider aspect-[4/3] rounded-3xl border bg-[#f9f7f4] flex items-center justify-center text-black/20">
-                <Utensils className="h-16 w-16" />
-              </div>
-            )}
-
+        {/* CARD */}
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="planner-card relative z-10 rounded-[34px] p-6 md:p-12"
+        >
+          {/* Header */}
+          <div className="mb-8 flex items-start justify-between gap-4">
             <div>
-              <div className="mb-4 text-xs font-bold tracking-widest text-[#ad8365] uppercase">
-                Ingredientes
+              <div className="mb-2 text-xs font-bold tracking-widest text-[#ad8365] uppercase">
+                Recetario familiar
               </div>
+              <h1 className="title-font text-4xl font-bold tracking-tight md:text-5xl">
+                {title}
+              </h1>
+            </div>
 
-              <div className="planner-divider rounded-3xl border bg-white/50 p-6 backdrop-blur-sm">
-                <ul className="space-y-4 text-sm">
-                  {ing.map((line, i) => (
-                    <li key={i} className="group flex items-start gap-3">
-                      <span className="ingredient-dot mt-1.5 inline-flex h-3 w-3 flex-shrink-0 rounded-full" />
-                      <span className="leading-relaxed text-[color:var(--ink)]/80">{line}</span>
-                    </li>
-                  ))}
-                  {ing.length === 0 && (
-                    <li className="italic text-[color:var(--muted)]">No hay ingredientes.</li>
-                  )}
-                </ul>
-              </div>
+            <div className="hidden flex-col items-end gap-2 text-[10px] font-bold tracking-widest text-[color:var(--muted)] md:flex">
+              <div className="planner-divider rounded-full border px-4 py-1.5 uppercase">Recipes</div>
+              <div className="planner-divider rounded-full border px-4 py-1.5 uppercase">Family</div>
             </div>
           </div>
 
-          {/* RIGHT */}
-          <div className="space-y-8 lg:col-span-7">
-            <div>
-              <div className="mb-4 text-xs font-bold tracking-widest text-[#ad8365] uppercase">
-                Direcciones
+          {/* Meta row */}
+          <div className="grid grid-cols-3 gap-4 text-xs text-[color:var(--muted)] md:text-sm">
+            <div className="planner-divider rounded-2xl border bg-white/50 px-4 py-3">
+              <div className="mb-1 text-[10px] font-bold tracking-wider uppercase text-[color:var(--ink)]">
+                Prep
               </div>
+              <div className="text-lg text-[#ad8365]">{metaLeft ?? '—'}</div>
+            </div>
+            <div className="planner-divider rounded-2xl border bg-white/50 px-4 py-3">
+              <div className="mb-1 text-[10px] font-bold tracking-wider uppercase text-[color:var(--ink)]">
+                Cook
+              </div>
+              <div className="text-lg text-[#ad8365]">{metaMid ?? '—'}</div>
+            </div>
+            <div className="planner-divider rounded-2xl border bg-white/50 px-4 py-3">
+              <div className="mb-1 text-[10px] font-bold tracking-wider uppercase text-[color:var(--ink)]">
+                Serves
+              </div>
+              <div className="text-lg text-[#ad8365]">{metaRight ?? '—'}</div>
+            </div>
+          </div>
 
-              <div className="planner-divider rounded-3xl border bg-white/30 p-8">
-                <ol className="space-y-6 text-sm leading-relaxed">
-                  {st.map((item, idx) => {
-                    const text = item.text ?? "" // <- aquí está el string real
+          <div className="planner-divider mt-8 border-t" />
 
-                    const isSpec = /^\[(?:especificaciones|spec)\s*:/i.test(text)
+          {/* Main grid */}
+          <div className="mt-8 grid gap-10 lg:grid-cols-12">
+            {/* LEFT */}
+            <div className="space-y-8 lg:col-span-5">
+              {photoUrl ? (
+                <div className="planner-divider relative aspect-[4/3] overflow-hidden rounded-3xl border bg-white shadow-inner">
+                  <Image
+                    src={photoUrl}
+                    alt={`Foto de ${title}`}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 40vw"
+                    className="object-cover transition-transform duration-700 hover:scale-105"
+                    priority
+                  />
+                </div>
+              ) : (
+                <div className="planner-divider aspect-[4/3] rounded-3xl border bg-[#f9f7f4] flex items-center justify-center text-black/20">
+                  <Utensils className="h-16 w-16" />
+                </div>
+              )}
 
-                    if (isSpec) {
-                      const clean = text
-                        .replace(/^\[(?:especificaciones|spec)\s*:/i, "")
-                        .replace(/\]$/, "")
-                        .trim()
+              <div>
+                <div className="mb-4 text-xs font-bold tracking-widest text-[#ad8365] uppercase">
+                  Ingredientes
+                </div>
 
-                      return (
-                        <li key={idx} className="flex gap-4">
-                          <span className="step-badge">{idx + 1}</span>
-                          <div className="pt-1 flex-1">
-                            <div className="spec-pill">{clean}</div>
-                          </div>
-                        </li>
-                      )
-                    }
+                <div className="planner-divider rounded-3xl border bg-white/50 p-6 backdrop-blur-sm">
+                  <ul className="space-y-4 text-sm">
+                    {ing.map((line, i) => (
+                      <li key={i} className="group flex items-start gap-3">
+                        <span className="ingredient-dot mt-1.5 inline-flex h-3 w-3 flex-shrink-0 rounded-full" />
+                        <span className="leading-relaxed text-[color:var(--ink)]/80">{line}</span>
+                      </li>
+                    ))}
+                    {ing.length === 0 && (
+                      <li className="italic text-[color:var(--muted)]">No hay ingredientes.</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </div>
 
-                    return (
+            {/* RIGHT */}
+            <div className="space-y-8 lg:col-span-7">
+              <div>
+                <div className="mb-4 text-xs font-bold tracking-widest text-[#ad8365] uppercase">
+                  Direcciones
+                </div>
+
+                <div className="planner-divider rounded-3xl border bg-white/30 p-8">
+                  <ol className="space-y-6 text-sm leading-relaxed">
+                    {st.map((item, idx) => (
                       <li key={idx} className="flex gap-4">
-                        <span className="step-badge">{idx + 1}</span>
-                        <div className="pt-1 flex-1">
-                          <div className="text-[color:var(--ink)]/90">{text}</div>
+                        <span className="step-badge flex-shrink-0">{idx + 1}</span>
+                        <div className="pt-1 flex-1 space-y-2">
+                          {/* FIX: Renderizamos item.text directamente (ya parseado) */}
+                          <div className="text-[color:var(--ink)]/90">{item.text}</div>
+                          {/* FIX: Mostramos spec-pill cuando existe item.spec */}
+                          {item.spec && (
+                            <div className="spec-pill">{item.spec}</div>
+                          )}
                         </div>
                       </li>
-                    )
-                  })}
+                    ))}
 
-                  {st.length === 0 && (
-                    <li className="italic text-[color:var(--muted)]">No hay pasos.</li>
-                  )}
-                </ol>
+                    {st.length === 0 && (
+                      <li className="italic text-[color:var(--muted)]">No hay pasos.</li>
+                    )}
+                  </ol>
+                </div>
               </div>
+
+              {/* Notes */}
+              {notes?.trim() ? (
+                <div className="planner-divider border-t pt-6">
+                  <div className="mb-3 text-xs font-bold tracking-widest text-[#ad8365] uppercase">
+                    Notas
+                  </div>
+                  <div className="border-l-2 border-[#ad8365]/20 pl-4 text-lg leading-relaxed text-[color:var(--muted)]">
+                    {notes}
+                  </div>
+                </div>
+              ) : null}
             </div>
-
-            {/* Notes */}
-            {notes?.trim() ? (
-              <div className="planner-divider border-t pt-6">
-                <div className="mb-3 text-xs font-bold tracking-widest text-[#ad8365] uppercase">
-                  Notas
-                </div>
-                <div className="border-l-2 border-[#ad8365]/20 pl-4 text-lg leading-relaxed text-[color:var(--muted)]">
-                  {notes}
-                </div>
-              </div>
-            ) : null}
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </section>
 
-      {/* Desktop Side Buttons (como Replit) */}
-      <div className="hidden md:flex flex-col gap-2 relative right-[-10px] top-[140px] z-30">
+      {/* FIX: Side tabs FUERA del section con overflow, usando absolute sobre el wrapper */}
+      <div className="hidden md:flex flex-col gap-2 absolute top-[140px] right-0 translate-x-full z-30">
         {onEdit && (
-          <button type="button" className="side-tab" onClick={onEdit}
-          style={{
-            background: '#a97d5f', // café bonito
-            color: '#fff'
-          }}
+          <button
+            type="button"
+            className="side-tab"
+            onClick={onEdit}
+            style={{ background: '#a97d5f', color: '#fff' }}
           >
             Editar
           </button>
         )}
         {onCook && (
-          <button type="button" className="side-tab" onClick={onCook}
-          style={{
-            background: '#a97d5f', // café bonito
-            color: '#fff'
-          }}
+          <button
+            type="button"
+            className="side-tab"
+            onClick={onCook}
+            style={{ background: '#a97d5f', color: '#fff' }}
           >
             Cocinar
           </button>
         )}
-        <button type="button" className="side-tab opacity-80" onClick={() => alert("Video coming soon")}
-          style={{
-            background: '#a97d5f', // café bonito
-            color: '#fff'
-          }}
-          >
+        <button
+          type="button"
+          className="side-tab opacity-80"
+          onClick={() => alert('Video coming soon')}
+          style={{ background: '#a97d5f', color: '#fff' }}
+        >
           Video
         </button>
       </div>
-
-      {/* Mobile FABs 
-      <div className="fixed bottom-24 right-6 z-50 flex flex-col gap-3 xl:hidden">
-        {onEdit && (
-          <button
-            type="button"
-            onClick={onEdit}
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-[#ad8365]/20 bg-white text-[#ad8365] shadow-lg"
-            aria-label="Editar"
-          >
-            <Edit2 className="h-5 w-5" />
-          </button>
-        )}
-        {onCook && (
-          <button
-            type="button"
-            onClick={onCook}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-[#ad8365] text-white shadow-xl shadow-[#ad8365]/30"
-            aria-label="Modo cocinar"
-          >
-            <Utensils className="h-6 w-6" />
-          </button>
-        )}
-      </div>
-      */}
-    </section>
+    </div>
   )
 }
