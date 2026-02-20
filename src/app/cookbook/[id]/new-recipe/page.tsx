@@ -125,9 +125,9 @@ export default function NewRecipeWizard() {
       const stepsTextFinal = stepsToText(stepsRows)
       if (!stepsTextFinal.trim()) throw new Error('Agrega al menos un paso.')
 
-      const metaLeft = prepValue ? `${prepValue} ${prepUnit}` : null
-      const metaMid = cookValue ? `${cookValue} ${cookUnit}` : null
-      const metaRight = servings.trim() || null
+      // Convertir a minutos según la unidad seleccionada
+      const prepMin = prepValue ? (prepUnit === 'hr' ? Number(prepValue) * 60 : Number(prepValue)) : null
+      const cookMin = cookValue ? (cookUnit === 'hr' ? Number(cookValue) * 60 : Number(cookValue)) : null
 
       const { data, error } = await supabase
         .from('recipes')
@@ -139,10 +139,9 @@ export default function NewRecipeWizard() {
           photo_url: null,
           ingredients_text: ingredientsText,
           steps_text: stepsTextFinal,
-          meta_left: metaLeft,
-          meta_mid: metaMid,
-          meta_right: metaRight,
-          notes: notes.trim() || null,
+          prep_time_min: prepMin,
+          cook_time_min: cookMin,
+          servings: servings.trim() || null,
         })
         .select('id')
         .single()
@@ -164,7 +163,10 @@ export default function NewRecipeWizard() {
 
       router.push(`/recipe/${recipeId}`)
     } catch (e: unknown) {
-      setMsg(e instanceof Error ? e.message : 'Ocurrió un error inesperado')
+      console.error('Error al guardar receta:', e)
+      if (e instanceof Error) setMsg(e.message)
+      else if (e && typeof e === 'object' && 'message' in e) setMsg((e as {message: string}).message)
+      else setMsg('Ocurrió un error inesperado')
     } finally {
       setSaving(false)
     }
