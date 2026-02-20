@@ -3,9 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useParams, useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { RecipeSheet } from '@/components/RecipeSheet'
-
 
 type Recipe = {
   id: string
@@ -14,7 +12,18 @@ type Recipe = {
   photo_url: string | null
   ingredients_text: string
   steps_text: string
+  prep_time_min: number | null
+  cook_time_min: number | null
+  servings: string | null
   created_at: string
+}
+
+function formatTime(minutes: number | null): string | null {
+  if (!minutes) return null
+  if (minutes < 60) return `${minutes} min`
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return m > 0 ? `${h}h ${m}min` : `${h}h`
 }
 
 export default function RecipePage() {
@@ -30,7 +39,7 @@ export default function RecipePage() {
       setLoading(true)
       const { data, error } = await supabase
         .from('recipes')
-        .select('id,cookbook_id,title,photo_url,ingredients_text,steps_text,created_at')
+        .select('id,cookbook_id,title,photo_url,ingredients_text,steps_text,prep_time_min,cook_time_min,servings,created_at')
         .eq('id', recipeId)
         .single()
 
@@ -44,13 +53,14 @@ export default function RecipePage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       {loading ? (
-        <p className="text-slate-800">Cargando…</p>
+        <p style={{ color: 'var(--recipe-muted)' }}>Cargando…</p>
       ) : !recipe ? (
-        <p className="text-slate-800">No encontré la receta.</p>
+        <p style={{ color: 'var(--recipe-muted)' }}>No encontré la receta.</p>
       ) : (
         <>
           <button
-            className="text-sm hover:underline"
+            className="mb-6 flex items-center gap-1.5 text-sm hover:opacity-70 transition-opacity"
+            style={{ color: 'var(--recipe-muted)' }}
             onClick={() => router.push(`/cookbook/${recipe.cookbook_id}`)}
           >
             ← Volver al recetario
@@ -59,12 +69,12 @@ export default function RecipePage() {
           <RecipeSheet
             title={recipe.title}
             photoUrl={recipe.photo_url}
-            metaLeft="Coming soon"
-            metaMid="Coming soon"
-            metaRight="Coming soon"
+            metaLeft={formatTime(recipe.prep_time_min)}
+            metaMid={formatTime(recipe.cook_time_min)}
+            metaRight={recipe.servings ?? null}
             ingredients={recipe.ingredients_text}
             steps={recipe.steps_text}
-            notes="Coming soon"
+            notes={null}
             onEdit={() => router.push(`/recipe/${recipe.id}/edit`)}
             onCook={() => router.push(`/recipe/${recipe.id}/cook`)}
           />
