@@ -570,7 +570,8 @@ export default function NewRecipeWizard() {
                 <input
                   className="planner-input w-full py-2 text-sm"
                   style={{ color: 'var(--ink)' }}
-                  placeholder="Ej. 4 personas"
+                  placeholder="Ej. 4"
+                  inputMode="numeric"
                   value={servings}
                   onChange={(e) => setServings(e.target.value)}
                 />

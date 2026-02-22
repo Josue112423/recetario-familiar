@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
-import { BookOpen, Share2, Copy } from "lucide-react"
+import { BookOpen, Share2, User } from "lucide-react"
 
 type Cookbook = {
   id: string
@@ -20,7 +20,6 @@ function hash(seed: string) {
 }
 
 function bookStyle(seed: string) {
-  // paletas tipo “libro” (determinísticas por id)
   const palettes = [
     { spine: '#5B3A2E', cover: 'linear-gradient(180deg,#F59E0B 0%,#B45309 100%)', ink: '#fff' },
     { spine: '#1F3A5F', cover: 'linear-gradient(180deg,#60A5FA 0%,#2563EB 100%)', ink: '#fff' },
@@ -31,8 +30,8 @@ function bookStyle(seed: string) {
   ]
   const n = hash(seed)
   const p = palettes[n % palettes.length]
-  const w = 54 + (n % 18) // 54–71
-  const h = 108 + ((n >>> 4) % 26) // 108–133
+  const w = 54 + (n % 18)
+  const h = 108 + ((n >>> 4) % 26)
   return { ...p, w, h }
 }
 
@@ -88,58 +87,45 @@ export default function LibraryPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
-      {/* Contenedor tipo planner/papel */}
-      <section className="planner-card watercolor-paper warm-glow rounded-[24px] border p-6 md:p-8 relative overflow-hidden">
-        {/* Decoraciones (usa tus imágenes en public/attached_assets) */}
-        
-        {/* Maceta abajo-izq (como la 2ª) */}
+      <section className="planner-card watercolor-paper warm-glow rounded-[24px] border p-6 md:p-8 relative overflow-hidden"
+               style={{ borderColor: 'var(--rule)' }}>
+
+        {/* Maceta abajo-izquierda */}
         <img
           src="/attached_assets/potted-plant.png"
           alt=""
           className="pointer-events-none absolute bottom-[16px] left-[24px] w-[92px] z-[60]"
         />
 
-
+        {/* FIX: Planta vine — contenida dentro del card con overflow-hidden del section */}
         <img
           src="/attached_assets/plant-vine.png"
           alt=""
-          className="pointer-events-none absolute right-[-8px] top-[190px] w-[110px] z-[60] opacity-90"
+          className="pointer-events-none absolute right-0 top-[60px] w-[100px] z-[60] opacity-90"
         />
 
         <div className="relative z-10">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          {/* Header */}
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <h1 className="flex items-center gap-2 text-3xl md:text-4xl title-font">
+              <h1 className="flex items-center gap-2 text-3xl md:text-4xl title-font" style={{ color: 'var(--ink)' }}>
                 <BookOpen className="w-6 h-6 opacity-70" />
                 Biblioteca familiar
               </h1>
-
-              <p className="mt-2 text-[13px] md:text-sm" style={{ color: 'var(--recipe-muted)' }}>
-                Tus recetarios como libros en un estante.
+              <p className="mt-1 text-[13px] md:text-sm" style={{ color: 'var(--recipe-muted)' }}>
+                Tus recetarios favoritos
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2 md:justify-end">
-              <button
-                className="rounded-xl border px-4 py-2 text-sm"
-                style={{ borderColor: 'var(--rule)', background: 'var(--paper)', color: 'var(--ink)' }}
-                onClick={() => router.push('/join')}
-              >
-                Cambiar / entrar a otra familia
-              </button>
-
-              <button
-                className="rounded-xl border px-4 py-2 text-sm"
-                style={{ borderColor: 'var(--rule)', background: 'var(--paper)', color: 'var(--ink)' }}
-                onClick={async () => {
-                  await supabase.auth.signOut()
-                  localStorage.removeItem('active_family_id')
-                  window.location.href = '/login'
-                }}
-              >
-                Cerrar sesión
-              </button>
-            </div>
+            {/* Botón Mi cuenta */}
+            <button
+              className="flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium self-start transition-opacity hover:opacity-70"
+              style={{ borderColor: 'var(--rule)', background: 'var(--paper)', color: 'var(--ink)' }}
+              onClick={() => router.push('/account')}
+            >
+              <User className="w-4 h-4" />
+              Mi cuenta
+            </button>
           </div>
 
           {/* Código de familia */}
@@ -148,23 +134,20 @@ export default function LibraryPage() {
                  style={{ borderColor: 'var(--rule)', background: 'var(--paper)' }}>
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <div className="text-xs font-semibold" style={{ color: 'var(--recipe-muted)' }}>
-                    Código de familia
+                  <div className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--recipe-muted)' }}>
+                    Codigo de familia
                   </div>
-                  <div
-                    className="mt-1 text-2xl font-extrabold tracking-widest"
-                    style={{ color: 'var(--ink)' }}
-                  >
+                  <div className="mt-1 text-2xl font-extrabold tracking-widest" style={{ color: 'var(--ink)' }}>
                     {familyCode}
                   </div>
                   <div className="mt-1 text-xs" style={{ color: 'var(--recipe-muted)' }}>
-                    Compártelo para que se unan al recetario.
+                    Compartelo para que se unan al recetario.
                   </div>
                 </div>
 
                 <div className="flex gap-2">
                   <button
-                    className="rounded-xl border px-4 py-2 text-sm"
+                    className="flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-opacity hover:opacity-70"
                     style={{ borderColor: 'var(--rule)', background: 'transparent', color: 'var(--ink)' }}
                     onClick={async () => {
                       await navigator.clipboard.writeText(familyCode)
@@ -175,7 +158,7 @@ export default function LibraryPage() {
                   </button>
 
                   <button
-                    className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm text-white"
+                    className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
                     style={{ background: 'hsl(var(--primary))' }}
                     onClick={async () => {
                       const text = `Únete a nuestro recetario familiar. Código: ${familyCode}\nLink: ${window.location.origin}/join`
@@ -224,21 +207,12 @@ export default function LibraryPage() {
 
                         <div
                           className="standing-book-body"
-                          style={{
-                            width: `${s.w}px`,
-                            height: `${s.h}px`,
-                          }}
+                          style={{ width: `${s.w}px`, height: `${s.h}px` }}
                         >
-                          <div
-                            className="standing-book-spine"
-                            style={{ background: s.spine }}
-                          />
+                          <div className="standing-book-spine" style={{ background: s.spine }} />
                           <div
                             className="standing-book-cover"
-                            style={{
-                              background: s.cover,
-                              color: s.ink,
-                            }}
+                            style={{ background: s.cover, color: s.ink }}
                           >
                             <div className="standing-book-title">{title}</div>
                             <div className="standing-book-label">RECETARIO</div>
@@ -249,7 +223,6 @@ export default function LibraryPage() {
                     )
                   })}
                 </div>
-
                 <div className="floating-shelf-plank relative z-10" />
               </div>
             )}
