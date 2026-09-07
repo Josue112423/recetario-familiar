@@ -8,6 +8,7 @@ import 'react-image-crop/dist/ReactCrop.css'
 import {
   ArrowLeft, User, Users, BookOpen, LogOut,
   ArrowRightLeft, Check, Palette, Upload, X,
+  Sliders, Image as ImageIcon,
 } from 'lucide-react'
 
 /* ─── Types ─────────────────────────────────────────── */
@@ -508,13 +509,16 @@ export default function AccountPage() {
             <div className="flex rounded-xl overflow-hidden border" style={{ borderColor:'var(--rule)' }}>
               {(['presets','custom','photo'] as ColorMode[]).map((m, i) => (
                 <button key={m} onClick={() => setColorMode(m)}
-                  className="flex-1 py-2 text-sm font-medium transition-colors"
+                  className="flex-1 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1.5"
                   style={{
                     background: colorMode===m ? 'var(--paper)' : 'rgba(40,35,30,0.04)',
                     color: colorMode===m ? 'var(--ink)' : 'var(--recipe-muted)',
                     borderRight: i < 2 ? `1px solid var(--rule)` : 'none',
                   }}>
-                  {m==='presets' ? '🎨 Colores' : m==='custom' ? '⚙ Personalizado' : '🖼 Foto'}
+                  {m==='presets' && <Palette className="w-3.5 h-3.5" />}
+                  {m==='custom' && <Sliders className="w-3.5 h-3.5" />}
+                  {m==='photo' && <ImageIcon className="w-3.5 h-3.5" />}
+                  {m==='presets' ? 'Colores' : m==='custom' ? 'Personalizado' : 'Foto'}
                 </button>
               ))}
             </div>
