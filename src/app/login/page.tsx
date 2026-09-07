@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
+import { Mail, ArrowLeft, BookOpen } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,9 +20,9 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
-    })
+      })
       if (error) throw error
 
       setMsg('Listo ✅ Revisa tu correo y abre el link para entrar.')
@@ -33,34 +34,89 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-6 py-12 text-slate-100">
-      <h1 className="text-3xl font-extrabold">Iniciar sesión</h1>
-      <p className="mt-2 text-slate-200">Te mandamos un link al correo para entrar.</p>
+    <main
+      className="min-h-screen flex items-center justify-center px-6 py-12"
+      style={{ background: 'var(--planner-bg)' }}
+    >
+      <div className="w-full max-w-md">
+        <button
+          className="flex items-center gap-1 text-sm mb-6 transition-opacity hover:opacity-70"
+          style={{ color: 'var(--recipe-muted)' }}
+          onClick={() => router.push('/')}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Volver al inicio
+        </button>
 
-      <label className="mt-6 block text-sm font-semibold  text-slate-200">Correo</label>
-      <input
-        className="mt-2 w-full rounded-xl border px-4 py-3 text-lg"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="tucorreo@gmail.com"
-      />
+        <div
+          className="planner-card watercolor-paper warm-glow rounded-[24px] border p-8 md:p-10 text-center"
+          style={{ borderColor: 'var(--rule)' }}
+        >
+          <div
+            className="mx-auto flex items-center justify-center rounded-full p-4"
+            style={{ width: 72, height: 72, background: 'rgba(173,131,101,0.12)' }}
+          >
+            <BookOpen style={{ width: 32, height: 32, color: '#ad8365' }} />
+          </div>
 
-      <button
-        className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-3 text-white hover:opacity-90 disabled:opacity-50"
-        onClick={sendLink}
-        disabled={loading}
-      >
-        {loading ? 'Enviando…' : 'Enviar link'}
-      </button>
+          <h1 className="title-font mt-6 text-3xl font-bold" style={{ color: 'var(--ink)' }}>
+            Iniciar sesión
+          </h1>
+          <p className="mt-2 text-sm" style={{ color: 'var(--recipe-muted)' }}>
+            Te mandamos un link mágico a tu correo, sin contraseñas.
+          </p>
 
-      {msg && <p className="mt-4 text-slate-800">{msg}</p>}
+          <div className="mt-8 text-left">
+            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--ink)' }}>
+              Correo
+            </label>
+            <div className="relative">
+              <Mail
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5"
+                style={{ color: 'var(--recipe-muted)' }}
+              />
+              <input
+                type="email"
+                className="w-full pl-12 pr-4 py-3 rounded-xl border text-base focus:outline-none focus:ring-2 transition-all"
+                style={{
+                  borderColor: 'var(--rule)',
+                  background: 'var(--paper)',
+                  color: 'var(--ink)',
+                }}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tucorreo@gmail.com"
+                onKeyDown={(e) => e.key === 'Enter' && sendLink()}
+              />
+            </div>
+          </div>
 
-      <button
-        className="mt-6 w-full rounded-xl border bg-slate-900 px-4 py-3 hover:bg-slate-50"
-        onClick={() => router.push('/join')}
-      >
-        Ya tengo sesión / Ir a unirme
-      </button>
+          <button
+            className="mt-6 w-full rounded-xl px-4 py-3 text-white font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{ background: 'hsl(var(--primary))' }}
+            onClick={sendLink}
+            disabled={loading}
+          >
+            {loading ? 'Enviando…' : 'Enviar link mágico'}
+          </button>
+
+          {msg && (
+            <p className="mt-4 text-sm" style={{ color: 'var(--ink)' }}>
+              {msg}
+            </p>
+          )}
+
+          <div className="mt-8 pt-6" style={{ borderTop: '1px solid var(--rule)' }}>
+            <button
+              className="w-full rounded-xl border px-4 py-3 text-sm font-medium transition-opacity hover:opacity-70"
+              style={{ borderColor: 'var(--rule)', background: 'transparent', color: 'var(--ink)' }}
+              onClick={() => router.push('/join')}
+            >
+              Ya tengo sesión / Ir a unirme
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
   )
 }
