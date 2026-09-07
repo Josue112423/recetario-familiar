@@ -280,24 +280,13 @@ export default function EditRecipePage() {
         Volver
       </button>
 
-      <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold title-font" style={{ color: 'var(--ink)' }}>
-            Editar receta
-          </h1>
-          <p className="mt-1 text-base" style={{ color: 'var(--recipe-muted)' }}>
-            {isDirty ? 'Tienes cambios sin guardar' : 'Haz cambios y guarda'}
-          </p>
-        </div>
-
-        <button
-          className="rounded-xl px-5 py-3 text-base font-semibold text-white disabled:opacity-50"
-          style={{ background: 'hsl(var(--primary))' }}
-          onClick={onSave}
-          disabled={saving || !recipe || !isDirty}
-        >
-          {saving ? 'Guardando…' : 'Guardar'}
-        </button>
+      <div className="mt-3">
+        <h1 className="text-3xl font-bold title-font" style={{ color: 'var(--ink)' }}>
+          Editar receta
+        </h1>
+        <p className="mt-1 text-base" style={{ color: 'var(--recipe-muted)' }}>
+          {isDirty ? 'Tienes cambios sin guardar' : 'Haz cambios y guarda'}
+        </p>
       </div>
 
       {loading ? (
