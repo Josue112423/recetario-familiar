@@ -11,7 +11,24 @@ type Cookbook = {
   owner_id: string
   title: string
   created_at: string
+  color: string | null
+  cover_image: string | null
 }
+
+// --- Paleta de colores (misma que en Library.tsx de Replit) ---
+const BOOK_COLOR_MAP: Record<string, { spine: string; cover: string; text: string; pages: string }> = {
+  brown:  { spine: "#8B6F47", cover: "linear-gradient(180deg, #c2956a 0%, #a07a50 100%)", text: "#fff8f0", pages: "#f5efe6" },
+  red:    { spine: "#8B4444", cover: "linear-gradient(180deg, #b85c5c 0%, #8B4444 100%)", text: "#fff0f0", pages: "#faf0f0" },
+  blue:   { spine: "#446688", cover: "linear-gradient(180deg, #5c8bb8 0%, #446688 100%)", text: "#f0f6ff", pages: "#f0f4fa" },
+  green:  { spine: "#3d7a56", cover: "linear-gradient(180deg, #5ca87a 0%, #3d7a56 100%)", text: "#f0fff6", pages: "#f0faf5" },
+  purple: { spine: "#6d5090", cover: "linear-gradient(180deg, #9678b8 0%, #6d5090 100%)", text: "#f6f0ff", pages: "#f4f0fa" },
+  gold:   { spine: "#9a7d3a", cover: "linear-gradient(180deg, #c4a35a 0%, #9a7d3a 100%)", text: "#fff8e8", pages: "#faf5e8" },
+  teal:   { spine: "#4a7878", cover: "linear-gradient(180deg, #6b9e9e 0%, #4a7878 100%)", text: "#f0ffff", pages: "#f0fafa" },
+  pink:   { spine: "#99526b", cover: "linear-gradient(180deg, #c47a96 0%, #99526b 100%)", text: "#fff0f6", pages: "#faf0f5" },
+  orange: { spine: "#b06b2a", cover: "linear-gradient(180deg, #d49350 0%, #b06b2a 100%)", text: "#fff5e8", pages: "#faf3e8" },
+}
+
+const BOOK_COLOR_KEYS = Object.keys(BOOK_COLOR_MAP)
 
 function hash(seed: string) {
   let n = 0
@@ -19,20 +36,67 @@ function hash(seed: string) {
   return n
 }
 
-function bookStyle(seed: string) {
-  const palettes = [
-    { spine: '#5B3A2E', cover: 'linear-gradient(180deg,#F59E0B 0%,#B45309 100%)', ink: '#fff' },
-    { spine: '#1F3A5F', cover: 'linear-gradient(180deg,#60A5FA 0%,#2563EB 100%)', ink: '#fff' },
-    { spine: '#2F4A3A', cover: 'linear-gradient(180deg,#34D399 0%,#059669 100%)', ink: '#0b1b12' },
-    { spine: '#4A2F5A', cover: 'linear-gradient(180deg,#C4B5FD 0%,#7C3AED 100%)', ink: '#fff' },
-    { spine: '#7A2E2E', cover: 'linear-gradient(180deg,#FDA4AF 0%,#E11D48 100%)', ink: '#fff' },
-    { spine: '#6B5035', cover: 'linear-gradient(180deg,#E7D3B0 0%,#C4A67A 100%)', ink: '#2a2a2a' },
-  ]
+function darkenHex(hex: string, amount: number): string {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const max = Math.max(r, g, b), min = Math.min(r, g, b)
+  let h = 0, s = 0
+  const l = (max + min) / 2
+  if (max !== min) {
+    const d = max - min
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6
+    else if (max === g) h = ((b - r) / d + 2) / 6
+    else h = ((r - g) / d + 4) / 6
+  }
+  const newL = Math.max(0, l - amount / 100)
+  const newS = s
+  const a2 = newS * Math.min(newL, 1 - newL)
+  const f = (n: number) => {
+    const k = (n + h * 12) % 12
+    const c = newL - a2 * Math.max(Math.min(k - 3, 9 - k, 1), -1)
+    return Math.round(255 * c).toString(16).padStart(2, '0')
+  }
+  return `#${f(0)}${f(8)}${f(4)}`
+}
+
+function lightenForText(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const l = (Math.max(r, g, b) + Math.min(r, g, b)) / 2
+  return l > 0.55 ? "#2a2218" : "#fff8f0"
+}
+
+// Devuelve los colores reales del libro:
+// 1) si "color" es una key conocida (brown, red, blue...) usa esa
+// 2) si "color" es un hex (#RRGGBB) genera la paleta a partir de ese hex
+// 3) si no hay color guardado, cae al color "aleatorio" por id (comportamiento anterior)
+function getBookColor(cookbook: Cookbook) {
+  if (cookbook.color && cookbook.color in BOOK_COLOR_MAP) {
+    return BOOK_COLOR_MAP[cookbook.color]
+  }
+  if (cookbook.color && /^#[0-9a-fA-F]{6}$/.test(cookbook.color)) {
+    const hexColor = cookbook.color
+    const spine = darkenHex(hexColor, 18)
+    const coverDark = darkenHex(hexColor, 12)
+    return {
+      spine,
+      cover: `linear-gradient(180deg, ${hexColor} 0%, ${coverDark} 100%)`,
+      text: lightenForText(hexColor),
+      pages: "#f5efe6",
+    }
+  }
+  const n = hash(cookbook.id)
+  return BOOK_COLOR_MAP[BOOK_COLOR_KEYS[n % BOOK_COLOR_KEYS.length]] || BOOK_COLOR_MAP.brown
+}
+
+function getBookSize(seed: string) {
   const n = hash(seed)
-  const p = palettes[n % palettes.length]
   const w = 54 + (n % 18)
   const h = 108 + ((n >>> 4) % 26)
-  return { ...p, w, h }
+  return { w, h }
 }
 
 export default function LibraryPage() {
@@ -66,9 +130,11 @@ export default function LibraryPage() {
 
       if (!famErr) setFamilyCode((fam?.code ?? null) as string | null)
 
+      // OJO: agregamos "color" y "cover_image" al select.
+      // Si tus columnas en Supabase se llaman distinto, ajusta los nombres aquí.
       const { data, error } = await supabase
         .from('cookbooks')
-        .select('id,family_id,owner_id,title,created_at')
+        .select('id,family_id,owner_id,title,created_at,color,cover_image')
         .eq('family_id', fid)
         .order('created_at', { ascending: false })
 
@@ -191,8 +257,11 @@ export default function LibraryPage() {
               <div className="floating-shelf-container animate-fade-up relative">
                 <div className="floating-shelf-books relative z-20">
                   {cookbooks.map((b) => {
-                    const s = bookStyle(b.id)
+                    const color = getBookColor(b)
+                    const { w, h } = getBookSize(b.id)
                     const title = (b.title || 'Recetario').trim()
+                    const hasCoverImg = !!b.cover_image
+
                     return (
                       <button
                         key={b.id}
@@ -207,17 +276,30 @@ export default function LibraryPage() {
 
                         <div
                           className="standing-book-body"
-                          style={{ width: `${s.w}px`, height: `${s.h}px` }}
+                          style={{ width: `${w}px`, height: `${h}px` }}
                         >
-                          <div className="standing-book-spine" style={{ background: s.spine }} />
+                          <div
+                            className="standing-book-spine"
+                            style={{ background: hasCoverImg ? "#333" : color.spine }}
+                          />
                           <div
                             className="standing-book-cover"
-                            style={{ background: s.cover, color: s.ink }}
+                            style={
+                              hasCoverImg
+                                ? { backgroundImage: `url(${b.cover_image})`, backgroundSize: "cover", backgroundPosition: "center" }
+                                : { background: color.cover, color: color.text }
+                            }
                           >
-                            <div className="standing-book-title">{title}</div>
-                            <div className="standing-book-label">RECETARIO</div>
+                            {!hasCoverImg && (
+                              <>
+                                <div className="standing-book-title">{title}</div>
+                                <div className="standing-book-label" style={{ color: `${color.text}99` }}>
+                                  RECETARIO
+                                </div>
+                              </>
+                            )}
                           </div>
-                          <div className="standing-book-pages" />
+                          <div className="standing-book-pages" style={{ background: color.pages }} />
                         </div>
                       </button>
                     )
