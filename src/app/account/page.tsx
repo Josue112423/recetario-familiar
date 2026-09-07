@@ -3,6 +3,8 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
+import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
+import 'react-image-crop/dist/ReactCrop.css'
 import {
   ArrowLeft, User, Users, BookOpen, LogOut,
   ArrowRightLeft, Check, Palette, Upload, X,
@@ -21,9 +23,10 @@ type ProfileData = {
   cookbookId: string | null
   cookbookTitle: string | null
   cookbookColor: string | null
+  coverImage: string | null
 }
 
-type ColorMode = 'presets' | 'custom'
+type ColorMode = 'presets' | 'custom' | 'photo'
 
 /* ─── Color helpers ──────────────────────────────────── */
 const PRESETS = [
@@ -97,10 +100,27 @@ function bookStyleFromColor(color: string | null) {
   return presetStyle('brown')
 }
 
+/* ─── Crop helper ─────────────────────────────────────── */
+function getCroppedImageBlob(image: HTMLImageElement, crop: PixelCrop): Promise<Blob> {
+  const canvas = document.createElement('canvas')
+  const scaleX = image.naturalWidth / image.width
+  const scaleY = image.naturalHeight / image.height
+  canvas.width = Math.round(crop.width * scaleX)
+  canvas.height = Math.round(crop.height * scaleY)
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(
+    image,
+    crop.x * scaleX, crop.y * scaleY,
+    crop.width * scaleX, crop.height * scaleY,
+    0, 0, canvas.width, canvas.height,
+  )
+  return new Promise((resolve) => canvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.9))
+}
+
 /* ─── Mini Book Preview ──────────────────────────────── */
 type BookStyle = { spine: string; cover: string; ink: string }
 
-function BookPreview({ title, style }: { title: string; style: BookStyle }) {
+function BookPreview({ title, style, imageUrl }: { title: string; style: BookStyle; imageUrl?: string | null }) {
   return (
     <div style={{ position: 'relative', width: 56, height: 80 }}>
       <div style={{
@@ -109,19 +129,26 @@ function BookPreview({ title, style }: { title: string; style: BookStyle }) {
         position: 'relative', overflow: 'hidden',
       }}>
         <div style={{ position:'absolute', left:0, top:0, bottom:0, width:8, background: style.spine, borderRadius:'3px 0 0 3px' }} />
-        <div style={{
-          position:'absolute', left:8, top:0, right:0, bottom:0,
-          background: style.cover, color: style.ink,
-          display:'flex', flexDirection:'column', alignItems:'center',
-          justifyContent:'center', padding:'6px 4px', textAlign:'center',
-        }}>
-          <span style={{ fontFamily:"'Comfortaa',cursive", fontSize:7, fontWeight:700, lineHeight:1.3, wordBreak:'break-word' }}>
-            {title}
-          </span>
-          <span style={{ fontSize:5, fontWeight:800, letterSpacing:'0.12em', marginTop:4, opacity:0.85 }}>
-            RECETARIO
-          </span>
-        </div>
+        {imageUrl ? (
+          <div style={{
+            position:'absolute', left:8, top:0, right:0, bottom:0,
+            backgroundImage:`url(${imageUrl})`, backgroundSize:'cover', backgroundPosition:'center',
+          }} />
+        ) : (
+          <div style={{
+            position:'absolute', left:8, top:0, right:0, bottom:0,
+            background: style.cover, color: style.ink,
+            display:'flex', flexDirection:'column', alignItems:'center',
+            justifyContent:'center', padding:'6px 4px', textAlign:'center',
+          }}>
+            <span style={{ fontFamily:"'Comfortaa',cursive", fontSize:7, fontWeight:700, lineHeight:1.3, wordBreak:'break-word' }}>
+              {title}
+            </span>
+            <span style={{ fontSize:5, fontWeight:800, letterSpacing:'0.12em', marginTop:4, opacity:0.85 }}>
+              RECETARIO
+            </span>
+          </div>
+        )}
         <div style={{
           position:'absolute', top:3, bottom:3, right:-3, width:4,
           borderRadius:'0 2px 2px 0',
@@ -201,6 +228,15 @@ export default function AccountPage() {
   const [hsl, setHsl] = useState({ h: 25, s: 60, l: 55 })
   const [hexInput, setHexInput] = useState('')
 
+  /* photo state */
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const imgRef = useRef<HTMLImageElement>(null)
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const [crop, setCrop] = useState<Crop>({ unit: '%', width: 80, height: 80, x: 10, y: 10 })
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [photoMsg, setPhotoMsg] = useState('')
+
   const customHex = hslToHex(hsl.h, hsl.s, hsl.l)
   const rgbFromHex = (hex: string) => ({
     r: parseInt(hex.slice(1,3),16),
@@ -224,7 +260,7 @@ export default function AccountPage() {
       const myUserId = user.id
 
       if (!fid) {
-        setProfile({ email: user.email??null, displayName:null, familyName:null, familyCode:null, members:[], myUserId, cookbookId:null, cookbookTitle:null, cookbookColor:null })
+        setProfile({ email: user.email??null, displayName:null, familyName:null, familyCode:null, members:[], myUserId, cookbookId:null, cookbookTitle:null, cookbookColor:null, coverImage:null })
         setLoading(false); return
       }
 
@@ -232,7 +268,7 @@ export default function AccountPage() {
         supabase.from('families').select('name,code').eq('id',fid).single(),
         supabase.from('family_members').select('display_name,role').eq('family_id',fid).eq('user_id',myUserId).single(),
         supabase.from('family_members').select('id,display_name,role,user_id').eq('family_id',fid).order('created_at',{ascending:true}),
-        supabase.from('cookbooks').select('id,title,color').eq('family_id',fid).eq('owner_id',myUserId).single(),
+        supabase.from('cookbooks').select('id,title,color,cover_image').eq('family_id',fid).eq('owner_id',myUserId).single(),
       ])
 
       const displayName = myMember?.display_name ?? null
@@ -242,7 +278,6 @@ export default function AccountPage() {
       const savedColor = cookbook?.color ?? null
       if (savedColor && /^#[0-9a-fA-F]{6}$/.test(savedColor)) {
         setHsl(hexToHsl(savedColor))
-        setColorMode('custom')
       }
 
       setProfile({
@@ -255,6 +290,7 @@ export default function AccountPage() {
         cookbookId: cookbook?.id ?? null,
         cookbookTitle: cookbook?.title ?? null,
         cookbookColor: savedColor,
+        coverImage: cookbook?.cover_image ?? null,
       })
       setLoading(false)
     }
@@ -283,11 +319,12 @@ export default function AccountPage() {
   const saveColor = async (color: string) => {
     if (!profile?.cookbookId) return
     setColorSaving(true); setColorMsg('')
+    // Un color nuevo reemplaza la portada de foto, si había una
     const { error } = await supabase.from('cookbooks')
-      .update({ color })
+      .update({ color, cover_image: null })
       .eq('id', profile.cookbookId)
     if (error) setColorMsg('Error al guardar color')
-    else setProfile(p => p ? { ...p, cookbookColor: color } : p)
+    else setProfile(p => p ? { ...p, cookbookColor: color, coverImage: null } : p)
     setColorSaving(false)
   }
 
@@ -296,6 +333,59 @@ export default function AccountPage() {
   const handleHexInput = (val: string) => {
     setHexInput(val)
     if (/^#[0-9a-fA-F]{6}$/.test(val)) setHsl(hexToHsl(val))
+  }
+
+  /* ── Photo: select / crop / upload / remove ── */
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoMsg('')
+    const reader = new FileReader()
+    reader.onload = () => setCropSrc(reader.result as string)
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  const handleCropConfirm = async () => {
+    if (!imgRef.current || !completedCrop || !profile?.cookbookId) return
+    setUploading(true)
+    setPhotoMsg('')
+    try {
+      const blob = await getCroppedImageBlob(imgRef.current, completedCrop)
+      const path = `${profile.cookbookId}-${Date.now()}.jpg`
+
+      const { error: uploadError } = await supabase.storage
+        .from('cookbook-covers')
+        .upload(path, blob, { contentType: 'image/jpeg', upsert: true })
+      if (uploadError) throw uploadError
+
+      const { data: publicUrlData } = supabase.storage
+        .from('cookbook-covers')
+        .getPublicUrl(path)
+      const url = publicUrlData.publicUrl
+
+      const { error: dbError } = await supabase.from('cookbooks')
+        .update({ cover_image: url })
+        .eq('id', profile.cookbookId)
+      if (dbError) throw dbError
+
+      setProfile(p => p ? { ...p, coverImage: url } : p)
+      setCropSrc(null)
+    } catch (e: unknown) {
+      setPhotoMsg(e instanceof Error ? e.message : 'Error al subir la foto')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const onRemoveCover = async () => {
+    if (!profile?.cookbookId) return
+    setPhotoMsg('')
+    const { error } = await supabase.from('cookbooks')
+      .update({ cover_image: null })
+      .eq('id', profile.cookbookId)
+    if (error) setPhotoMsg('Error al quitar la portada')
+    else setProfile(p => p ? { ...p, coverImage: null } : p)
   }
 
   /* ── Misc ── */
@@ -411,20 +501,20 @@ export default function AccountPage() {
               <span className="text-xs font-bold tracking-widest uppercase" style={{ color:'var(--recipe-muted)' }}>Portada de tu recetario</span>
             </div>
             <p className="text-sm" style={{ color:'var(--recipe-muted)' }}>
-              Personaliza tu libro de recetas. Elige un color predefinido o crea tu propio color.
+              Personaliza tu libro de recetas. Elige un color predefinido, crea tu propio color o sube una foto de portada.
             </p>
 
             {/* Tabs */}
             <div className="flex rounded-xl overflow-hidden border" style={{ borderColor:'var(--rule)' }}>
-              {(['presets','custom'] as ColorMode[]).map((m) => (
+              {(['presets','custom','photo'] as ColorMode[]).map((m, i) => (
                 <button key={m} onClick={() => setColorMode(m)}
                   className="flex-1 py-2 text-sm font-medium transition-colors"
                   style={{
                     background: colorMode===m ? 'var(--paper)' : 'rgba(40,35,30,0.04)',
                     color: colorMode===m ? 'var(--ink)' : 'var(--recipe-muted)',
-                    borderRight: m==='presets' ? `1px solid var(--rule)` : 'none',
+                    borderRight: i < 2 ? `1px solid var(--rule)` : 'none',
                   }}>
-                  {m==='presets' ? '🎨 Colores' : '⚙ Personalizado'}
+                  {m==='presets' ? '🎨 Colores' : m==='custom' ? '⚙ Personalizado' : '🖼 Foto'}
                 </button>
               ))}
             </div>
@@ -434,7 +524,7 @@ export default function AccountPage() {
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-2">
                   {PRESETS.map(p => {
-                    const active = profile.cookbookColor === p.key
+                    const active = !profile.coverImage && profile.cookbookColor === p.key
                     return (
                       <button key={p.key} onClick={() => saveColor(p.key)}
                         disabled={colorSaving}
@@ -455,6 +545,10 @@ export default function AccountPage() {
                       </button>
                     )
                   })}
+                </div>
+                <div className="flex flex-col items-center gap-1 w-fit">
+                  <BookPreview title={profile.cookbookTitle ?? 'Recetario'} style={currentStyle} imageUrl={profile.coverImage} />
+                  <span className="text-xs" style={{ color:'var(--recipe-muted)' }}>Vista previa</span>
                 </div>
                 {colorMsg && <p className="text-xs text-rose-600">{colorMsg}</p>}
               </div>
@@ -568,6 +662,88 @@ export default function AccountPage() {
                   {colorSaving ? 'Guardando…' : 'Aplicar este color'}
                 </button>
                 {colorMsg && <p className="text-xs text-rose-600">{colorMsg}</p>}
+              </div>
+            )}
+
+            {/* Photo */}
+            {colorMode === 'photo' && (
+              <div className="space-y-4">
+                {cropSrc ? (
+                  <div className="space-y-3">
+                    <p className="text-xs" style={{ color:'var(--recipe-muted)' }}>
+                      Arrastra para elegir qué parte de la foto se ve en la portada del libro.
+                    </p>
+                    <div className="rounded-lg" style={{ background:'rgba(0,0,0,0.03)', padding:8 }}>
+                      <ReactCrop
+                        crop={crop}
+                        onChange={(_, percentCrop) => setCrop(percentCrop)}
+                        onComplete={(c) => setCompletedCrop(c)}
+                        aspect={5/7}
+                      >
+                        <img
+                          ref={imgRef}
+                          src={cropSrc}
+                          alt="Recortar"
+                          style={{ maxHeight:320, width:'100%', objectFit:'contain' }}
+                        />
+                      </ReactCrop>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleCropConfirm} disabled={uploading}
+                        className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white disabled:opacity-50 transition-opacity hover:opacity-90"
+                        style={{ background:'hsl(var(--primary))' }}>
+                        <Check className="w-3.5 h-3.5" />
+                        {uploading ? 'Subiendo…' : 'Usar esta portada'}
+                      </button>
+                      <button
+                        onClick={() => setCropSrc(null)}
+                        className="rounded-xl border px-4 py-2 text-sm"
+                        style={{ borderColor:'var(--rule)', color:'var(--ink)' }}>
+                        Cancelar
+                      </button>
+                    </div>
+                    {photoMsg && <p className="text-xs text-rose-600">{photoMsg}</p>}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-xs" style={{ color:'var(--recipe-muted)' }}>
+                      Sube una foto para usarla como portada de tu recetario. Podrás recortarla para que encaje perfecto.
+                    </p>
+
+                    {profile.coverImage && (
+                      <div className="flex items-start gap-3">
+                        <BookPreview title={profile.cookbookTitle ?? 'Recetario'} style={currentStyle} imageUrl={profile.coverImage} />
+                        <div className="flex-1 space-y-2">
+                          <p className="text-xs font-medium" style={{ color:'var(--ink)' }}>Portada actual</p>
+                          <button onClick={onRemoveCover}
+                            className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs"
+                            style={{ borderColor:'var(--rule)', color:'var(--ink)' }}>
+                            <X className="w-3 h-3" />
+                            Quitar portada
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full rounded-lg border-2 border-dashed p-6 flex flex-col items-center gap-2 transition-colors"
+                      style={{ borderColor:'rgba(173,131,101,0.3)', color:'var(--recipe-muted)' }}>
+                      <Upload className="w-6 h-6" />
+                      <span className="text-sm font-medium">Subir foto</span>
+                      <span className="text-xs">JPG, PNG o WEBP</span>
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    {photoMsg && <p className="text-xs text-rose-600">{photoMsg}</p>}
+                  </div>
+                )}
               </div>
             )}
 
