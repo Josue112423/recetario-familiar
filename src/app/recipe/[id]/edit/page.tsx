@@ -14,7 +14,7 @@ type Recipe = {
   photo_url: string | null
   prep_time_min: number | null
   cook_time_min: number | null
-  servings: string | null
+  servings: number | null
   notes: string | null
 }
 
@@ -135,8 +135,8 @@ export default function EditRecipePage() {
 
         setPrepTimeMin(r.prep_time_min != null ? String(r.prep_time_min) : '')
         setCookTimeMin(r.cook_time_min != null ? String(r.cook_time_min) : '')
-        setServings(r.servings || '')
-        setNotes(r.notes || '')
+        setServings(r.servings != null ? String(r.servings) : '')
+        setNotes(r.notes != null ? String(r.notes) : '')
       }
       setLoading(false)
     }
@@ -150,6 +150,8 @@ export default function EditRecipePage() {
     if (!recipe) return false
     const origPrep = recipe.prep_time_min != null ? String(recipe.prep_time_min) : ''
     const origCook = recipe.cook_time_min != null ? String(recipe.cook_time_min) : ''
+    const origServings = recipe.servings != null ? String(recipe.servings) : ''
+    const origNotes = recipe.notes != null ? String(recipe.notes) : ''
     return (
       title !== recipe.title ||
       ingredientsText !== recipe.ingredients_text ||
@@ -158,8 +160,8 @@ export default function EditRecipePage() {
       (photoPreview || null) !== (recipe.photo_url || null) ||
       prepTimeMin.trim() !== origPrep ||
       cookTimeMin.trim() !== origCook ||
-      servings !== (recipe.servings || '') ||
-      notes !== (recipe.notes || '')
+      servings !== origServings ||
+      notes !== origNotes
     )
   }, [recipe, title, ingredientsText, stepsText, photoFile, photoPreview, prepTimeMin, cookTimeMin, servings, notes])
 
@@ -251,7 +253,7 @@ export default function EditRecipePage() {
           photo_url: finalPhotoUrl,
           prep_time_min: prepTimeMin.trim() ? Number(prepTimeMin) : null,
           cook_time_min: cookTimeMin.trim() ? Number(cookTimeMin) : null,
-          servings: servings.trim() || null,
+          servings: servings.trim() ? Number(servings) : null,
           notes: notes.trim() || null,
           updated_at: new Date().toISOString(),
         })
@@ -563,6 +565,7 @@ export default function EditRecipePage() {
                   value={servings}
                   onChange={(e) => setServings(e.target.value)}
                   placeholder="4"
+                  inputMode="numeric"
                 />
               </div>
             </div>
@@ -622,7 +625,7 @@ NOTAS PARA QUE ESTO FUNCIONE:
      ALTER TABLE recipes ADD COLUMN IF NOT EXISTS photo_url text;
      ALTER TABLE recipes ADD COLUMN IF NOT EXISTS prep_time_min integer;
      ALTER TABLE recipes ADD COLUMN IF NOT EXISTS cook_time_min integer;
-     ALTER TABLE recipes ADD COLUMN IF NOT EXISTS servings text;
+     ALTER TABLE recipes ADD COLUMN IF NOT EXISTS servings integer;
      ALTER TABLE recipes ADD COLUMN IF NOT EXISTS notes text;
    (si alguna ya existe, "IF NOT EXISTS" evita error; tú ya tienes
    prep_time_min y cook_time_min, así que esas dos las puedes omitir)
