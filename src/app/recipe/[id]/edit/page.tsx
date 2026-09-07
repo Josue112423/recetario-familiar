@@ -43,45 +43,40 @@ function listToText(list: ListItem[]): string {
 }
 
 // ---------- Pasos: texto <-> filas (con especificacion opcional) ----------
-// Formato guardado: los pasos se separan con una línea "---".
-// Dentro de un paso, una línea "  [Especificaciones: algo]" guarda la especificación.
-const SPEC_LINE = /^\s*\[Especificaciones:\s*(.*?)\]\s*$/i
+// Formato guardado: un paso por línea (sin separadores extra, para que el
+// display siga leyendo "una línea = un paso"). Si el paso tiene
+// especificación, va al final de la MISMA línea como "[spec: texto]".
+const SPEC_TAG = /\[spec:\s*(.*?)\]/i
 
 function textToSteps(text: string): StepItem[] {
-  const raw = (text || '').trim()
-  if (!raw) return [{ id: makeId(), text: '', spec: '', specOpen: false }]
+  const lines = (text || '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0)
 
-  const blocks = raw.includes('---') ? raw.split(/\n\s*---\s*\n/) : raw.split('\n')
+  if (lines.length === 0) return [{ id: makeId(), text: '', spec: '', specOpen: false }]
 
-  const steps = blocks
-    .map((block) => {
-      const lines = block.split('\n')
-      let spec = ''
-      const mainLines: string[] = []
-      for (const line of lines) {
-        const match = line.match(SPEC_LINE)
-        if (match) {
-          spec = match[1].trim()
-        } else {
-          const cleaned = line.replace(/^-\s*/, '').trim()
-          if (cleaned) mainLines.push(cleaned)
-        }
-      }
-      return { id: makeId(), text: mainLines.join(' ').trim(), spec, specOpen: !!spec }
-    })
-    .filter((s) => s.text.length > 0 || s.spec.length > 0)
-
-  return steps.length > 0 ? steps : [{ id: makeId(), text: '', spec: '', specOpen: false }]
+  return lines.map((line) => {
+    let spec = ''
+    let main = line
+    const match = line.match(SPEC_TAG)
+    if (match) {
+      spec = match[1].trim()
+      main = line.replace(match[0], '').trim()
+    }
+    main = main.replace(/^-\s*/, '').trim()
+    return { id: makeId(), text: main, spec, specOpen: !!spec }
+  })
 }
 
 function stepsToText(steps: StepItem[]): string {
-  const blocks = steps
+  return steps
     .filter((s) => s.text.trim().length > 0)
     .map((s) => {
       const spec = s.spec.trim()
-      return spec ? `${s.text.trim()}\n  [Especificaciones: ${spec}]` : s.text.trim()
+      return spec ? `${s.text.trim()} [spec: ${spec}]` : s.text.trim()
     })
-  return blocks.join('\n---\n')
+    .join('\n')
 }
 
 // Nombre del bucket de Supabase Storage donde se guardan las fotos de recetas.
@@ -635,8 +630,7 @@ NOTAS PARA QUE ESTO FUNCIONE:
    Si tu bucket ya existe con otro nombre, cambia PHOTO_BUCKET arriba.
 
 3) Formato de "Pasos" guardado en steps_text:
-   Los pasos se separan con una línea "---". Si un paso tiene
-   especificación, se guarda en la línea siguiente como
-   "  [Especificaciones: texto]". Esto es compatible con datos
-   que ya tenías guardados en ese formato.
+   Un paso por línea (sin separadores extra, para que el display siga
+   leyendo cada línea como un paso). Si un paso tiene especificación,
+   se agrega al final de esa MISMA línea como "[spec: texto]".
 */
