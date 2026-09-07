@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback, type DragEvent } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Upload, X, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Upload, X, Plus, Trash2, Clock, Users, StickyNote, ChevronDown } from 'lucide-react'
 
 type Recipe = {
   id: string
@@ -12,15 +12,20 @@ type Recipe = {
   ingredients_text: string
   steps_text: string
   photo_url: string | null
+  prep_time_min: number | null
+  cook_time_min: number | null
+  servings: string | null
+  notes: string | null
 }
 
 type ListItem = { id: string; text: string }
+type StepItem = { id: string; text: string; spec: string; specOpen: boolean }
 
 function makeId() {
   return Math.random().toString(36).slice(2)
 }
 
-// Convierte el texto guardado ("- 3g de pollo\n- 1 taza de arroz") en filas editables
+// ---------- Ingredientes: texto <-> filas ----------
 function textToList(text: string): ListItem[] {
   const lines = (text || '')
     .split('\n')
@@ -30,7 +35,6 @@ function textToList(text: string): ListItem[] {
   return lines.map((l) => ({ id: makeId(), text: l }))
 }
 
-// Convierte las filas editables de vuelta al texto que se guarda en la base de datos
 function listToText(list: ListItem[]): string {
   return list
     .map((i) => i.text.trim())
@@ -38,8 +42,49 @@ function listToText(list: ListItem[]): string {
     .join('\n')
 }
 
+// ---------- Pasos: texto <-> filas (con especificacion opcional) ----------
+// Formato guardado: los pasos se separan con una línea "---".
+// Dentro de un paso, una línea "  [Especificaciones: algo]" guarda la especificación.
+const SPEC_LINE = /^\s*\[Especificaciones:\s*(.*?)\]\s*$/i
+
+function textToSteps(text: string): StepItem[] {
+  const raw = (text || '').trim()
+  if (!raw) return [{ id: makeId(), text: '', spec: '', specOpen: false }]
+
+  const blocks = raw.includes('---') ? raw.split(/\n\s*---\s*\n/) : raw.split('\n')
+
+  const steps = blocks
+    .map((block) => {
+      const lines = block.split('\n')
+      let spec = ''
+      const mainLines: string[] = []
+      for (const line of lines) {
+        const match = line.match(SPEC_LINE)
+        if (match) {
+          spec = match[1].trim()
+        } else {
+          const cleaned = line.replace(/^-\s*/, '').trim()
+          if (cleaned) mainLines.push(cleaned)
+        }
+      }
+      return { id: makeId(), text: mainLines.join(' ').trim(), spec, specOpen: !!spec }
+    })
+    .filter((s) => s.text.length > 0 || s.spec.length > 0)
+
+  return steps.length > 0 ? steps : [{ id: makeId(), text: '', spec: '', specOpen: false }]
+}
+
+function stepsToText(steps: StepItem[]): string {
+  const blocks = steps
+    .filter((s) => s.text.trim().length > 0)
+    .map((s) => {
+      const spec = s.spec.trim()
+      return spec ? `${s.text.trim()}\n  [Especificaciones: ${spec}]` : s.text.trim()
+    })
+  return blocks.join('\n---\n')
+}
+
 // Nombre del bucket de Supabase Storage donde se guardan las fotos de recetas.
-// Créalo en Supabase > Storage si todavía no existe (ver notas al final del archivo).
 const PHOTO_BUCKET = 'recipe-photos'
 
 export default function EditRecipePage() {
@@ -55,19 +100,25 @@ export default function EditRecipePage() {
 
   const [title, setTitle] = useState('')
   const [ingredientsList, setIngredientsList] = useState<ListItem[]>([{ id: makeId(), text: '' }])
-  const [stepsList, setStepsList] = useState<ListItem[]>([{ id: makeId(), text: '' }])
+  const [stepsList, setStepsList] = useState<StepItem[]>([{ id: makeId(), text: '', spec: '', specOpen: false }])
 
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
 
+  const [prepTimeMin, setPrepTimeMin] = useState('')
+  const [cookTimeMin, setCookTimeMin] = useState('')
+  const [servings, setServings] = useState('')
+  const [notes, setNotes] = useState('')
+
   useEffect(() => {
     const run = async () => {
       setLoading(true)
-      // OJO: agregamos "photo_url" al select. Ver notas al final del archivo.
+      // OJO: agregamos photo_url, prep_time_min, cook_time_min, servings y notes al select.
+      // Ver notas al final del archivo si tu tabla todavía no tiene estas columnas.
       const { data, error } = await supabase
         .from('recipes')
-        .select('id,cookbook_id,title,ingredients_text,steps_text,photo_url')
+        .select('id,cookbook_id,title,ingredients_text,steps_text,photo_url,prep_time_min,cook_time_min,servings,notes')
         .eq('id', recipeId)
         .single()
 
@@ -79,8 +130,13 @@ export default function EditRecipePage() {
         setRecipe(r)
         setTitle(r.title)
         setIngredientsList(textToList(r.ingredients_text))
-        setStepsList(textToList(r.steps_text))
+        setStepsList(textToSteps(r.steps_text))
         setPhotoPreview(r.photo_url || null)
+
+        setPrepTimeMin(r.prep_time_min != null ? String(r.prep_time_min) : '')
+        setCookTimeMin(r.cook_time_min != null ? String(r.cook_time_min) : '')
+        setServings(r.servings || '')
+        setNotes(r.notes || '')
       }
       setLoading(false)
     }
@@ -89,18 +145,23 @@ export default function EditRecipePage() {
   }, [recipeId])
 
   const ingredientsText = useMemo(() => listToText(ingredientsList), [ingredientsList])
-  const stepsText = useMemo(() => listToText(stepsList), [stepsList])
-
+  const stepsText = useMemo(() => stepsToText(stepsList), [stepsList])
   const isDirty = useMemo(() => {
     if (!recipe) return false
+    const origPrep = recipe.prep_time_min != null ? String(recipe.prep_time_min) : ''
+    const origCook = recipe.cook_time_min != null ? String(recipe.cook_time_min) : ''
     return (
       title !== recipe.title ||
       ingredientsText !== recipe.ingredients_text ||
       stepsText !== recipe.steps_text ||
       photoFile !== null ||
-      (photoPreview || null) !== (recipe.photo_url || null)
+      (photoPreview || null) !== (recipe.photo_url || null) ||
+      prepTimeMin.trim() !== origPrep ||
+      cookTimeMin.trim() !== origCook ||
+      servings !== (recipe.servings || '') ||
+      notes !== (recipe.notes || '')
     )
-  }, [recipe, title, ingredientsText, stepsText, photoFile, photoPreview])
+  }, [recipe, title, ingredientsText, stepsText, photoFile, photoPreview, prepTimeMin, cookTimeMin, servings, notes])
 
   // ---------- Foto ----------
   const handlePhotoFile = (file: File) => {
@@ -148,9 +209,19 @@ export default function EditRecipePage() {
   const updateStep = (id: string, text: string) => {
     setStepsList((list) => list.map((s) => (s.id === id ? { ...s, text } : s)))
   }
-  const addStep = () => setStepsList((list) => [...list, { id: makeId(), text: '' }])
+  const addStep = () => setStepsList((list) => [...list, { id: makeId(), text: '', spec: '', specOpen: false }])
   const removeStep = (id: string) =>
     setStepsList((list) => (list.length > 1 ? list.filter((s) => s.id !== id) : list))
+
+  const toggleStepSpec = (id: string) => {
+    setStepsList((list) => list.map((s) => (s.id === id ? { ...s, specOpen: !s.specOpen } : s)))
+  }
+  const updateStepSpec = (id: string, spec: string) => {
+    setStepsList((list) => list.map((s) => (s.id === id ? { ...s, spec } : s)))
+  }
+  const removeStepSpec = (id: string) => {
+    setStepsList((list) => list.map((s) => (s.id === id ? { ...s, spec: '', specOpen: false } : s)))
+  }
 
   const onCancel = () => {
     if (isDirty && !confirm('Tienes cambios sin guardar. ¿Salir sin guardar?')) return
@@ -178,6 +249,10 @@ export default function EditRecipePage() {
           ingredients_text: ingredientsText,
           steps_text: stepsText,
           photo_url: finalPhotoUrl,
+          prep_time_min: prepTimeMin.trim() ? Number(prepTimeMin) : null,
+          cook_time_min: cookTimeMin.trim() ? Number(cookTimeMin) : null,
+          servings: servings.trim() || null,
+          notes: notes.trim() || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', recipe.id)
@@ -358,7 +433,7 @@ export default function EditRecipePage() {
             </button>
           </section>
 
-          {/* Pasos: una casilla por paso, numerada */}
+          {/* Pasos: una casilla por paso, con especificacion opcional */}
           <section
             className="rounded-2xl border p-6"
             style={{ borderColor: 'var(--rule)', background: 'var(--paper)' }}
@@ -370,30 +445,70 @@ export default function EditRecipePage() {
               Escribe un paso en cada casilla, en el orden en que se hacen.
             </p>
 
-            <div className="mt-4 grid gap-3">
+            <div className="mt-4 grid gap-4">
               {stepsList.map((item, idx) => (
-                <div key={item.id} className="flex items-start gap-2">
-                  <span
-                    className="mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold"
-                    style={{ background: 'var(--rule)', color: 'var(--ink)' }}
-                  >
-                    {idx + 1}
-                  </span>
-                  <textarea
-                    className="flex-1 rounded-xl border px-4 py-3 text-base"
-                    style={{ borderColor: 'var(--rule)', minHeight: 60 }}
-                    value={item.text}
-                    onChange={(e) => updateStep(item.id, e.target.value)}
-                    placeholder="Ej. Cocer el pollo por 20 minutos"
-                  />
-                  <button
-                    className="mt-1 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl hover:bg-black/5 disabled:opacity-30"
-                    onClick={() => removeStep(item.id)}
-                    disabled={stepsList.length <= 1}
-                    aria-label="Quitar paso"
-                  >
-                    <Trash2 className="w-5 h-5" style={{ color: '#a33' }} />
-                  </button>
+                <div key={item.id} className="rounded-xl border" style={{ borderColor: 'var(--rule)' }}>
+                  <div className="flex items-start gap-2 p-3">
+                    <span
+                      className="mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+                      style={{ background: 'var(--rule)', color: 'var(--ink)' }}
+                    >
+                      {idx + 1}
+                    </span>
+                    <textarea
+                      className="flex-1 rounded-xl border px-4 py-3 text-base"
+                      style={{ borderColor: 'var(--rule)', minHeight: 60 }}
+                      value={item.text}
+                      onChange={(e) => updateStep(item.id, e.target.value)}
+                      placeholder="Ej. Cocer el pollo por 20 minutos"
+                    />
+                    <button
+                      className="mt-1 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl hover:bg-black/5 disabled:opacity-30"
+                      onClick={() => removeStep(item.id)}
+                      disabled={stepsList.length <= 1}
+                      aria-label="Quitar paso"
+                    >
+                      <Trash2 className="w-5 h-5" style={{ color: '#a33' }} />
+                    </button>
+                  </div>
+
+                  {/* Especificacion opcional, como acordeon */}
+                  <div className="px-3 pb-3 pl-14">
+                    {item.specOpen ? (
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold" style={{ color: 'var(--recipe-muted)' }}>
+                            ESPECIFICACIONES
+                          </span>
+                          <button
+                            className="flex items-center gap-1 text-xs font-medium hover:opacity-70"
+                            style={{ color: '#a33' }}
+                            onClick={() => removeStepSpec(item.id)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Quitar
+                          </button>
+                        </div>
+                        <input
+                          className="mt-1 w-full rounded-xl border px-4 py-2 text-sm"
+                          style={{ borderColor: 'var(--rule)' }}
+                          value={item.spec}
+                          onChange={(e) => updateStepSpec(item.id, e.target.value)}
+                          placeholder="Ej. Horno a 180°C, tapado"
+                          autoFocus
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        className="flex items-center gap-1 text-sm font-medium hover:opacity-70"
+                        style={{ color: 'var(--recipe-muted)' }}
+                        onClick={() => toggleStepSpec(item.id)}
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                        Agregar especificación
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -406,6 +521,83 @@ export default function EditRecipePage() {
               <Plus className="w-5 h-5" />
               Agregar paso
             </button>
+          </section>
+
+          {/* Tiempos y porciones */}
+          <section
+            className="rounded-2xl border p-6"
+            style={{ borderColor: 'var(--rule)', background: 'var(--paper)' }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Clock className="w-4 h-4" style={{ color: '#ad8365' }} />
+              <span className="text-lg font-semibold" style={{ color: 'var(--ink)' }}>
+                Tiempos y porciones
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <label className="text-sm" style={{ color: 'var(--recipe-muted)' }}>
+                  Preparación (minutos)
+                </label>
+                <input
+                  className="w-full rounded-xl border px-3 py-2 text-base"
+                  style={{ borderColor: 'var(--rule)' }}
+                  value={prepTimeMin}
+                  onChange={(e) => setPrepTimeMin(e.target.value)}
+                  placeholder="30"
+                  inputMode="numeric"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm" style={{ color: 'var(--recipe-muted)' }}>
+                  Cocción (minutos)
+                </label>
+                <input
+                  className="w-full rounded-xl border px-3 py-2 text-base"
+                  style={{ borderColor: 'var(--rule)' }}
+                  value={cookTimeMin}
+                  onChange={(e) => setCookTimeMin(e.target.value)}
+                  placeholder="45"
+                  inputMode="numeric"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="flex items-center gap-1 text-sm" style={{ color: 'var(--recipe-muted)' }}>
+                  <Users className="w-3.5 h-3.5" />
+                  Porciones
+                </label>
+                <input
+                  className="w-full rounded-xl border px-3 py-2 text-base"
+                  style={{ borderColor: 'var(--rule)' }}
+                  value={servings}
+                  onChange={(e) => setServings(e.target.value)}
+                  placeholder="4"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Notas */}
+          <section
+            className="rounded-2xl border p-6"
+            style={{ borderColor: 'var(--rule)', background: 'var(--paper)' }}
+          >
+            <label
+              className="flex items-center gap-2 text-lg font-semibold"
+              style={{ color: 'var(--ink)' }}
+            >
+              <StickyNote className="w-4 h-4" style={{ color: '#ad8365' }} />
+              Notas
+            </label>
+            <textarea
+              className="mt-2 w-full rounded-xl border px-4 py-3 text-base"
+              style={{ borderColor: 'var(--rule)', minHeight: 100 }}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Trucos, sustituciones, historia de la receta..."
+            />
           </section>
 
           {msg && <p style={{ color: '#a33' }}>{msg}</p>}
@@ -437,18 +629,22 @@ export default function EditRecipePage() {
 /*
 NOTAS PARA QUE ESTO FUNCIONE:
 
-1) Columna nueva en la tabla "recipes":
-   Ve a Supabase > SQL Editor y corre:
-     ALTER TABLE recipes ADD COLUMN photo_url text;
+1) Columnas nuevas en la tabla "recipes" (Supabase > SQL Editor), si te falta alguna:
+     ALTER TABLE recipes ADD COLUMN IF NOT EXISTS photo_url text;
+     ALTER TABLE recipes ADD COLUMN IF NOT EXISTS prep_time_min integer;
+     ALTER TABLE recipes ADD COLUMN IF NOT EXISTS cook_time_min integer;
+     ALTER TABLE recipes ADD COLUMN IF NOT EXISTS servings text;
+     ALTER TABLE recipes ADD COLUMN IF NOT EXISTS notes text;
+   (si alguna ya existe, "IF NOT EXISTS" evita error; tú ya tienes
+   prep_time_min y cook_time_min, así que esas dos las puedes omitir)
 
 2) Bucket de Storage para las fotos:
-   Ve a Supabase > Storage > New bucket, créalo con el nombre "recipe-photos"
-   y márcalo como público (Public bucket) para que las fotos se puedan ver
-   sin iniciar sesión. Si tu bucket ya existe con otro nombre, cambia la
-   constante PHOTO_BUCKET al inicio de este archivo.
+   Supabase > Storage > New bucket > nombre "recipe-photos" > público.
+   Si tu bucket ya existe con otro nombre, cambia PHOTO_BUCKET arriba.
 
-3) Políticas de Storage (Policies):
-   Si tu bucket no es público o usas Row Level Security, agrega una policy
-   que permita "insert"/"update" en ese bucket (al menos para usuarios
-   autenticados, o pública si tu app no usa login).
+3) Formato de "Pasos" guardado en steps_text:
+   Los pasos se separan con una línea "---". Si un paso tiene
+   especificación, se guarda en la línea siguiente como
+   "  [Especificaciones: texto]". Esto es compatible con datos
+   que ya tenías guardados en ese formato.
 */
