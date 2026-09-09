@@ -100,7 +100,7 @@ type OpeningBook = {
   hasCoverImg: boolean
   coverImage: string | null
 }
-type Phase = 'idle' | 'grow' | 'flip'
+type Phase = 'idle' | 'grow' | 'flip' | 'closing'
 
 export default function LibraryPage() {
   const router = useRouter()
@@ -151,24 +151,38 @@ export default function LibraryPage() {
     run()
   }, [familyId])
 
-  /* Secuencia de animación: idle -> grow -> flip -> navegar */
+  /* Primer clic: el libro crece y se queda esperando en el centro */
   useEffect(() => {
     if (!opening) return
+    if (phase !== 'idle') return
     const t = setTimeout(() => setPhase('grow'), 20)
     return () => clearTimeout(t)
-  }, [opening])
+  }, [opening, phase])
+
+  /* Segundo clic (sobre el libro ya centrado): se abre y navega */
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!opening || phase !== 'grow') return
+    setPhase('flip')
+  }
 
   useEffect(() => {
     if (!opening) return
-    if (phase === 'grow') {
-      const t = setTimeout(() => setPhase('flip'), 550)
-      return () => clearTimeout(t)
-    }
     if (phase === 'flip') {
       const t = setTimeout(() => router.push(`/cookbook/${opening.id}`), 650)
       return () => clearTimeout(t)
     }
+    if (phase === 'closing') {
+      const t = setTimeout(() => { setOpening(null); setPhase('idle') }, 550)
+      return () => clearTimeout(t)
+    }
   }, [phase, opening, router])
+
+  /* Clic afuera: regresa el libro al estante para poder elegir otro */
+  const handleBackdropClick = () => {
+    if (!opening || phase !== 'grow') return
+    setPhase('closing')
+  }
 
   const handleOpenBook = (b: Cookbook, e: React.MouseEvent<HTMLButtonElement>) => {
     if (opening) return // ya hay una animación en curso
@@ -294,8 +308,8 @@ export default function LibraryPage() {
                             <span>📖</span>
                             <span>{title}</span>
                           </div>
-                          <div className="standing-book-body" style={{ width: `${w}px`, height: `${h}px`, position: 'relative' }}>
-                            <div className="standing-book-spine" style={{ background: hasCoverImg ? "#333" : color.spine, position: 'relative', overflow: 'hidden' }}>
+                          <div className="standing-book-body" style={{ width: `${w}px`, height: `${h}px` }}>
+                            <div className="standing-book-spine" style={{ background: hasCoverImg ? "#333" : color.spine, overflow: 'hidden' }}>
                               {!hasCoverImg && (
                                 <>
                                   {/* Banda dorada superior */}
@@ -310,7 +324,6 @@ export default function LibraryPage() {
                             <div
                               className="standing-book-cover"
                               style={{
-                                position: 'relative',
                                 overflow: 'hidden',
                                 ...(hasCoverImg
                                   ? { backgroundImage: `url(${b.cover_image})`, backgroundSize: "cover", backgroundPosition: "center" }
@@ -349,21 +362,25 @@ export default function LibraryPage() {
       {opening && (
         <div
           className="fixed inset-0 z-[999] flex items-center justify-center"
+          onClick={handleBackdropClick}
           style={{
-            background: phase === 'idle' ? 'rgba(30,20,10,0)' : 'rgba(20,14,8,0.55)',
+            background: (phase === 'idle' || phase === 'closing') ? 'rgba(30,20,10,0)' : 'rgba(20,14,8,0.55)',
             transition: 'background 0.4s ease',
+            cursor: phase === 'grow' ? 'pointer' : 'default',
           }}
         >
           <div
+            onClick={handleCardClick}
             style={{
               position: 'fixed',
-              top: phase === 'idle' ? opening.rect.top : '50%',
-              left: phase === 'idle' ? opening.rect.left : '50%',
-              width: phase === 'idle' ? opening.rect.width : 230,
-              height: phase === 'idle' ? opening.rect.height : 330,
-              transform: phase === 'idle' ? 'translate(0,0)' : 'translate(-50%,-50%)',
+              top: (phase === 'idle' || phase === 'closing') ? opening.rect.top : '50%',
+              left: (phase === 'idle' || phase === 'closing') ? opening.rect.left : '50%',
+              width: (phase === 'idle' || phase === 'closing') ? opening.rect.width : 230,
+              height: (phase === 'idle' || phase === 'closing') ? opening.rect.height : 330,
+              transform: (phase === 'idle' || phase === 'closing') ? 'translate(0,0)' : 'translate(-50%,-50%)',
               transition: 'top 0.55s cubic-bezier(0.4,0,0.2,1), left 0.55s cubic-bezier(0.4,0,0.2,1), width 0.55s cubic-bezier(0.4,0,0.2,1), height 0.55s cubic-bezier(0.4,0,0.2,1), transform 0.55s cubic-bezier(0.4,0,0.2,1)',
               perspective: 1200,
+              cursor: phase === 'grow' ? 'pointer' : 'default',
             }}
           >
             <div
@@ -428,6 +445,18 @@ export default function LibraryPage() {
               </div>
             </div>
           </div>
+
+          {phase === 'grow' && (
+            <p
+              className="fixed text-center text-sm"
+              style={{
+                top: 'calc(50% + 190px)', left: '50%', transform: 'translateX(-50%)',
+                color: '#f7f0e4', textShadow: '0 1px 4px rgba(0,0,0,0.4)',
+              }}
+            >
+              Toca el libro para abrirlo, o toca afuera para elegir otro
+            </p>
+          )}
         </div>
       )}
     </main>
