@@ -302,17 +302,41 @@ export default function AccountPage() {
   const saveDisplayName = async () => {
     if (!newName.trim()) return
     setNameSaving(true); setNameMsg('')
+    const trimmedName = newName.trim()
     const fid = localStorage.getItem('active_family_id')
     const { data: userData } = await supabase.auth.getUser()
-    const { error } = await supabase.from('family_members')
-      .update({ display_name: newName.trim() })
+
+    const { error: memberError } = await supabase.from('family_members')
+      .update({ display_name: trimmedName })
       .eq('family_id', fid)
       .eq('user_id', userData.user?.id)
-    if (error) setNameMsg('Error al guardar')
-    else {
-      setProfile(p => p ? { ...p, displayName: newName.trim() } : p)
-      setNameEditing(false)
+
+    if (memberError) {
+      setNameMsg('Error al guardar')
+      setNameSaving(false)
+      return
     }
+
+    // También actualizamos el título del recetario para que coincida con el nuevo nombre
+    const newCookbookTitle = `Recetario de ${trimmedName}`
+    if (profile?.cookbookId) {
+      const { error: cookbookError } = await supabase.from('cookbooks')
+        .update({ title: newCookbookTitle })
+        .eq('id', profile.cookbookId)
+
+      if (cookbookError) {
+        setNameMsg('Nombre guardado, pero no se pudo actualizar el título del recetario')
+        setNameSaving(false)
+        return
+      }
+    }
+
+    setProfile(p => p ? {
+      ...p,
+      displayName: trimmedName,
+      cookbookTitle: p.cookbookId ? newCookbookTitle : p.cookbookTitle,
+    } : p)
+    setNameEditing(false)
     setNameSaving(false)
   }
 
