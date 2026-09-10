@@ -66,25 +66,51 @@ export default function RecipePage() {
   const handleShare = async () => {
     if (!sheetRef.current || !recipe) return
     setSharing(true)
+
+    const el = sheetRef.current
+    const originalWidth = el.style.width
+    const originalMaxWidth = el.style.maxWidth
+
     try {
       const html2canvas = (await import('html2canvas-pro')).default
       const { jsPDF } = await import('jspdf')
 
-      const canvas = await html2canvas(sheetRef.current, {
+      // Forzamos un ancho tipo "escritorio" para que SIEMPRE salga
+      // el layout de 2 columnas, sin importar si compartes desde
+      // celular o una ventana angosta.
+      const CAPTURE_WIDTH = 820
+      el.style.width = `${CAPTURE_WIDTH}px`
+      el.style.maxWidth = `${CAPTURE_WIDTH}px`
+
+      // Le damos un respiro al navegador para que recalcule el layout
+      // con el nuevo ancho antes de capturar.
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+
+      const canvas = await html2canvas(el, {
         backgroundColor: '#ffffff',
         scale: 2, // más nitidez
         useCORS: true,
+        windowWidth: CAPTURE_WIDTH,
+        width: CAPTURE_WIDTH,
       })
 
       const imgData = canvas.toDataURL('image/png')
 
-      // El PDF sale con la misma proporción exacta que la captura
+      // Márgenes alrededor del contenido para que no se sienta amontonado
+      const MARGIN = 60
+      const pdfWidth = canvas.width + MARGIN * 2
+      const pdfHeight = canvas.height + MARGIN * 2
+
       const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+        orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
         unit: 'px',
-        format: [canvas.width, canvas.height],
+        format: [pdfWidth, pdfHeight],
       })
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height)
+
+      // Fondo cálido (mismo tono que tu app) en vez de blanco puro
+      pdf.setFillColor('#f5ecd9')
+      pdf.rect(0, 0, pdfWidth, pdfHeight, 'F')
+      pdf.addImage(imgData, 'PNG', MARGIN, MARGIN, canvas.width, canvas.height)
 
       const fileName = `${slugify(recipe.title)}.pdf`
       const pdfBlob = pdf.output('blob')
@@ -105,6 +131,8 @@ export default function RecipePage() {
       console.error(e)
       alert('No se pudo generar el PDF. Intenta de nuevo.')
     } finally {
+      el.style.width = originalWidth
+      el.style.maxWidth = originalMaxWidth
       setSharing(false)
     }
   }
