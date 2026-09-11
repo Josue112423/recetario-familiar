@@ -76,9 +76,9 @@ export default function RecipePage() {
       const { jsPDF } = await import('jspdf')
 
       // Forzamos un ancho tipo "escritorio" para que SIEMPRE salga
-      // el layout de 2 columnas, sin importar si compartes desde
-      // celular o una ventana angosta.
-      const CAPTURE_WIDTH = 820
+      // el layout de 2 columnas. Tu RecipeSheet usa el breakpoint
+      // "lg:" (1024px), así que necesitamos superar ese punto.
+      const CAPTURE_WIDTH = 1100
       el.style.width = `${CAPTURE_WIDTH}px`
       el.style.maxWidth = `${CAPTURE_WIDTH}px`
 

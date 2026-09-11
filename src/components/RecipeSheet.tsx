@@ -217,7 +217,11 @@ export function RecipeSheet({
       </section>
 
       {/* FIX: Side tabs FUERA del section con overflow, usando absolute sobre el wrapper */}
-      <div className="hidden md:flex flex-col gap-2 absolute top-[140px] right-0 translate-x-full z-30">
+      {/* data-html2canvas-ignore: para que no salgan flotando en el PDF que se comparte */}
+      <div
+        data-html2canvas-ignore="true"
+        className="hidden md:flex flex-col gap-2 absolute top-[140px] right-0 translate-x-full z-30"
+      >
         {onEdit && (
           <button
             type="button"
