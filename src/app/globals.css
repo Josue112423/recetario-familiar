@@ -24,6 +24,16 @@
 
 /* ================= GLOBAL BASE ================= */
 
+/* FIX: Tailwind v4 usa un gris oklch() por defecto para la clase "border"
+   cuando no se especifica color. Eso hace que html2canvas-pro (usado para
+   generar el PDF de las recetas) a veces lo capture invisible.
+   Forzamos que todo borde sin color explícito use --rule (rgba normal). */
+@layer base {
+  *, ::before, ::after {
+    border-color: var(--rule);
+  }
+}
+
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
@@ -476,7 +486,3 @@ h1, h2, h3, h4, h5, h6,
 .animate-fade-up {
   animation: fadeSlideUp 0.5s ease-out forwards;
 }
-
-
-
-
